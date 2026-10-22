@@ -1,0 +1,21 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:900px">
+  <h1>Market</h1>
+  <div class="tabs"><% [['live', 'Live'], ['pending', 'To review' + (pendingCount ? ' (' + pendingCount + ')' : '')], ['hidden', 'Hidden'], ['sold', 'Sold'], ['all', 'All']].forEach(function (t) { %><a href="?status=<%= t[0] %>" <%- status === t[0] ? 'aria-current="page"' : '' %>><%= t[1] %></a><% }) %></div>
+  <form method="get" class="searchbar" style="margin-bottom:12px"><input type="hidden" name="status" value="<%= status %>"><%- icon('search') %><input type="search" name="q" value="<%= q %>" placeholder="Search by title or seller" aria-label="Search items"><button class="btn btn-primary btn-sm" type="submit">Search</button></form>
+  <p class="muted small"><%= total %> item<%= total === 1 ? '' : 's' %></p>
+  <% if (!items.length) { %><div class="empty"><h2>Nothing here</h2></div><% } %>
+  <div class="stack">
+    <% items.forEach(function (i) { %>
+      <article class="card lodge-row">
+        <% const cv = i.media.find(function (m) { return m.type !== 'video'; }); if (cv) { %><img src="<%= mediaSrc(cv, 'thumb') %>" width="84" height="64" alt="" loading="lazy"><% } else { %><div class="thumb-ph"></div><% } %>
+        <div class="grow">
+          <h3><a href="/admin/market/<%= i._id %>"><%= i.title %></a></h3>
+          <p class="muted small" style="margin:0"><span class="tag <%= i.status === 'live' ? 'tag-ok' : i.status === 'pending' ? 'tag-info' : i.status === 'hidden' ? 'tag-danger' : '' %>"><%= C.MARKET_STATUS_LABELS[i.status] %></span> &middot; <%= i.price ? naira(i.price) : 'Free' %> &middot; <a href="/admin/users/<%= i.seller.uid %>"><%= i.seller.name %></a><%= i.seller.banned ? ' (banned)' : '' %><%= i.reportCount ? ' · ' + i.reportCount + ' report(s)' : '' %></p>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+  <% if (pages > 1) { %><nav class="pager"><% if (page > 1) { %><a class="btn btn-ghost btn-sm" href="?status=<%= status %>&q=<%= encodeURIComponent(q) %>&page=<%= page - 1 %>">Previous</a><% } %><% if (page < pages) { %><a class="btn btn-ghost btn-sm" href="?status=<%= status %>&q=<%= encodeURIComponent(q) %>&page=<%= page + 1 %>">Next</a><% } %></nav><% } %>
+</div>
+<%- include('../partials/bottom') %>

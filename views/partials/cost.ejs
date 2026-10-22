@@ -1,0 +1,20 @@
+<% const b = breakdown(unit.rent, fees, unit.initialPayment); %>
+<div class="cost">
+  <h4>Initial payment</h4>
+  <p class="cost-note" style="margin:-4px 0 8px">What you pay the first time you move in.</p>
+  <dl>
+    <% b.lines.forEach(function (line) { %>
+      <div class="cost-row">
+        <dt><%= line.label %><%= line.percent ? ' (' + line.percent + '%)' : '' %>
+          <% if (line.key === 'rent') { %><span class="sub"><%= periodLabel(unit.period).replace('per', 'Paid per') %></span>
+          <% } else { %><span class="sub">Paid to <%= payeeWord(line.payee) %><%= line.refundable ? ' \u00B7 refundable' : '' %><%= line.note ? ' \u00B7 ' + line.note : '' %></span><% } %>
+        </dt>
+        <dd><%= naira(line.amount) %></dd>
+      </div>
+    <% }) %>
+  </dl>
+  <% if (!fees || !fees.length) { %><p class="cost-note">The lister has not added any charges besides rent.</p><% } %>
+  <div class="cost-total"><span>Initial payment</span><strong><%= naira(b.total) %></strong></div>
+  <p class="cost-note"><strong>When you renew</strong>, the rent is <%= naira(unit.rent) %> <%= periodLabel(unit.period).replace('per', 'per') %>.</p>
+  <p class="cost-note">Confirm every charge with the lister before you pay, and pay only after you have inspected the place.</p>
+</div>

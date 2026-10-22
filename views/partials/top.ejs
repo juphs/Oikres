@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title><%= title ? title + ' | ' + site.name : site.name + (site.tagline ? ' | ' + site.tagline : '') %></title>
+<meta name="description" content="<%= description || site.description %>">
+<link rel="canonical" href="<%= url %>">
+<% if (noindex) { %><meta name="robots" content="noindex"><% } %>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="<%= themeMeta.light %>" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="<%= themeMeta.dark %>" media="(prefers-color-scheme: dark)">
+<meta name="csrf-token" content="<%= csrfToken() %>">
+<meta name="storage-driver" content="<%= cfg.storageDriver %>">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="<%= site.iconUrl || '/icons/favicon-32.png' %>">
+<link rel="apple-touch-icon" href="<%= site.iconUrl || '/icons/apple-touch-icon.png' %>">
+<meta property="og:site_name" content="<%= site.name %>">
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= title || site.name %>">
+<meta property="og:description" content="<%= description || site.description %>">
+<meta property="og:url" content="<%= url %>">
+<% if (ogImage) { %><meta property="og:image" content="<%= ogImage %>"><meta name="twitter:card" content="summary_large_image"><% } else { %><meta property="og:image" content="<%= cfg.baseUrl %><%= site.iconUrl || '/icons/icon-512.png' %>"><% } %>
+<link rel="stylesheet" href="/css/app.css?v=<%= cfg.assetVersion %>">
+<style><%- themeCss %></style>
+</head>
+<body data-auth="<%= user ? '1' : '' %>" data-area="<%= area %>"<%- welcomeVersion ? ' data-welcome="' + welcomeVersion + '"' + (!hideNav && area === 'public' ? ' data-welcome-auto="1"' : '') : '' %><%- cfg.isProd ? '' : ' data-dev' %><%- hideNav ? ' data-no-install' : '' %>>
+<a class="skip" href="#main">Skip to content</a>
+<%- include('icons') %>
+<% if (impersonating) { %>
+<div class="impersonate" role="status">
+  <span>You are viewing the site as <strong><%= user.name %></strong> (signed in by <%= impersonating.by %>).</span>
+  <form method="post" action="/stop-impersonating"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Return to admin</button></form>
+</div>
+<% } %>
+<div class="shell">
+<%- include('sidebar') %>
+<div class="shell-main">
+<%- include('header') %>
+<% if (area === 'admin') { %><%- include('admin-tabs') %><% } %>
+<% if (site.announcement.enabled && site.announcement.text) { %><div class="announce announce-<%= site.announcement.tone %>" role="status"><%= site.announcement.text %></div><% } %>
+<main id="main" class="<%= hideNav ? 'no-nav' : '' %>">
+<% if (flash.length) { %><div class="container narrow" style="max-width:760px"><% flash.forEach(function (f) { %><div class="alert alert-<%= f.type %>" role="status"><%= f.msg %></div><% }) %></div><% } %>

@@ -1,0 +1,11 @@
+<%# The introduction popup. Rendered as a fragment and loaded by public/js/welcome.js. w comes from services/welcome.view(). %>
+<div class="welcome-body">
+  <h2 id="welcome-title" class="welcome-title"><%= w.title %></h2>
+  <% if (w.intro) { %><p class="welcome-intro"><%= w.intro %></p><% } %>
+  <ul class="welcome-list">
+    <% w.items.forEach(function (it) { %>
+      <li><span class="welcome-ico" aria-hidden="true"><%- icon(it.icon) %></span><div><strong><%= it.title %></strong><% if (it.text) { %><p><%= it.text %></p><% } %></div></li>
+    <% }) %>
+  </ul>
+</div>
+<div class="welcome-foot"><button type="button" class="btn btn-primary btn-block" data-welcome-close><%= w.buttonLabel %></button></div>

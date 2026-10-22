@@ -1,0 +1,56 @@
+<%- include('../partials/top') %>
+<% const e = errors || {}; const bad = function (k) { return e[k] ? 'invalid' : ''; }; const v = function (k) { return form[k] == null ? '' : form[k]; }; %>
+<div class="container" style="max-width:720px">
+  <a class="small" href="/admin/ads">&larr; Ads</a>
+  <h1 style="margin-top:8px"><%= ad ? 'Edit ad' : 'New ad' %></h1>
+  <% if (Object.keys(e).length) { %><div class="alert alert-error" role="alert"><strong>Please fix these:</strong><ul style="margin:6px 0 0;padding-left:18px"><% Object.keys(e).forEach(function (k) { %><li><%= e[k] %></li><% }) %></ul></div><% } %>
+  <form method="post" action="<%= ad ? '/admin/ads/' + ad._id + '/edit' : '/admin/ads' %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <input type="hidden" name="imageUrl" id="imageUrl" value="<%= v('imageUrl') %>"><input type="hidden" name="thumbUrl" id="thumbUrl" value="<%= v('thumbUrl') %>"><input type="hidden" name="mediaUid" id="mediaUid" value="<%= v('mediaUid') %>"><input type="hidden" name="videoUrl" id="videoUrl" value="<%= v('videoUrl') %>"><input type="hidden" name="videoMediaUid" id="videoMediaUid" value="<%= v('videoMediaUid') %>">
+
+    <section class="card form-card">
+      <h2>What people see</h2>
+      <div class="field"><label class="label" for="title">Headline</label><input id="title" name="title" type="text" maxlength="80" value="<%= v('title') %>" class="<%= bad('title') %>" required></div>
+      <div class="field"><label class="label" for="body">Text <span class="muted">(optional if there is an image or video)</span></label><textarea id="body" name="body" rows="3" maxlength="300" class="<%= bad('body') %>"><%= v('body') %></textarea></div>
+      <div class="field"><span class="label">Image <span class="muted">(optional)</span></span>
+        <div id="ad-preview"></div>
+        <label class="dropzone"><input type="file" id="ad-image-input" accept="image/jpeg,image/png,image/webp"><%- icon('upload') %><strong>Choose an image</strong><span class="hint">Landscape works best, like a lodge photo.</span></label>
+        <button type="button" class="btn btn-ghost btn-sm" id="ad-remove" hidden>Remove image</button> <span class="small muted" id="ad-image-status" aria-live="polite"></span>
+        <% if (e.imageUrl) { %><div class="error-text"><%= e.imageUrl %></div><% } %></div>
+      <div class="field"><span class="label">Video <span class="muted">(optional, plays by itself)</span></span>
+        <div id="ad-video-preview"></div>
+        <label class="dropzone"><input type="file" id="ad-video-input" accept="video/mp4,video/quicktime"><%- icon('upload') %><strong>Choose a video</strong><span class="hint">MP4 or MOV, up to 25 MB. Keep it short (under 15 seconds). It plays silently and repeats. The image above is shown until it loads.</span></label>
+        <button type="button" class="btn btn-ghost btn-sm" id="ad-video-remove" hidden>Remove video</button> <span class="small muted" id="ad-video-status" aria-live="polite"></span>
+        <% if (e.videoUrl) { %><div class="error-text"><%= e.videoUrl %></div><% } %></div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="sponsor">Sponsored by <span class="muted">(optional)</span></label><input id="sponsor" name="sponsor" type="text" maxlength="40" value="<%= v('sponsor') %>"></div>
+        <div class="field"><label class="label" for="badge">Label on the card</label><input id="badge" name="badge" type="text" maxlength="16" value="<%= v('badge') || 'Ad' %>"></div>
+      </div>
+    </section>
+
+    <section class="card form-card">
+      <h2>The button</h2>
+      <div class="field"><label class="label" for="linkType">Where should it go?</label>
+        <select id="linkType" name="linkType"><% LINK_TYPES.forEach(function (t) { %><option value="<%= t.value %>" <%= v('linkType') === t.value ? 'selected' : '' %>><%= t.label %></option><% }) %></select></div>
+      <div id="link-fields">
+        <div class="field"><label class="label" for="linkValue" id="linkLabel">Web address</label><input id="linkValue" name="linkValue" type="text" maxlength="300" value="<%= v('linkValue') %>" class="<%= bad('linkValue') %>"></div>
+        <div class="field"><label class="label" for="buttonLabel">Button text</label><input id="buttonLabel" name="buttonLabel" type="text" maxlength="24" value="<%= v('buttonLabel') %>" placeholder="Learn more"></div>
+      </div>
+    </section>
+
+    <section class="card form-card" data-places>
+      <h2>Where and when</h2>
+      <div class="field"><label class="label" for="placement">Show it in</label>
+        <select id="placement" name="placement"><% PLACEMENTS.forEach(function (p) { %><option value="<%= p.value %>" <%= v('placement') === p.value ? 'selected' : '' %>><%= p.label %></option><% }) %></select></div>
+      <p class="hint" style="margin-top:-4px">Leave state and campus empty to show everywhere, or pick one to show only to people browsing that place.</p>
+      <%- include('../partials/places-fields', { values: { state: v('state'), campus: v('campus') }, errors: {}, campusLabel: 'Campus', campusNone: 'Any campus', stateNone: 'Any state' }) %>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="startsAt">Starts <span class="muted">(optional)</span></label><input id="startsAt" name="startsAt" type="date" value="<%= v('startsAt') %>"></div>
+        <div class="field"><label class="label" for="endsAt">Ends <span class="muted">(optional)</span></label><input id="endsAt" name="endsAt" type="date" value="<%= v('endsAt') %>" class="<%= bad('endsAt') %>"></div>
+      </div>
+      <div class="field"><label class="label" for="position">Order</label><input id="position" name="position" type="number" min="0" max="1000" value="<%= v('position') === '' ? 100 : v('position') %>"><div class="hint">Lower numbers show first when several ads are running.</div></div>
+    </section>
+    <div class="form-actions"><button class="btn btn-primary" type="submit"><%= ad ? 'Save ad' : 'Create ad' %></button></div>
+  </form>
+</div>
+<%- include('../partials/bottom', { scripts: ['places.js', 'uploader.js', 'ad-form.js'] }) %>

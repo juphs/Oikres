@@ -1,0 +1,128 @@
+<%- include('partials/top') %>
+<%
+  const images = (l.media || []).filter(function (m) { return m.type === 'image'; });
+  const video = (l.media || []).find(function (m) { return m.type === 'video'; });
+  const ver = (l.listerProfile && l.listerProfile.verification) || {};
+  const isLive = C.PUBLIC_STATUSES.indexOf(l.status) > -1;
+  const saved = savedSet.has(String(l._id));
+  const multi = l.units.length > 1;
+  const total = images.length + (video ? 1 : 0);
+%>
+<div class="container detail">
+  <div class="detail-top">
+    <a class="icon-btn" href="/" data-back aria-label="Back to results"><%- icon('arrow-left') %></a>
+    <div>
+      <button type="button" class="icon-btn" data-share="<%= url %>" aria-label="Share this lodge"><%- icon('share') %></button>
+      <button type="button" class="icon-btn" data-heart="<%= l._id %>" aria-pressed="<%= saved ? 'true' : 'false' %>" aria-label="<%= saved ? 'Remove from saved' : 'Save lodge' %>"><%- icon('heart') %></button>
+    </div>
+  </div>
+
+  <% if (l.status === 'rented') { %><div class="alert alert-warn">This lodge has been rented. <a href="/">Browse other lodges</a></div><% } %>
+  <% if (!isLive && l.status !== 'rented') { %><div class="alert alert-info">Preview: only you and the <%= site.name %> team can see this page. Status: <strong><%= statusLabel(l.status) %></strong>.<%= l.rejectionReason ? ' ' + l.rejectionReason : '' %> <% if (isOwner) { %><a href="/lister/lodges/<%= l._id %>/edit">Edit lodge</a><% } %></div><% } %>
+
+  <div class="detail-grid">
+    <div class="detail-main">
+      <% if (total) { %>
+        <div class="gallery" data-gallery role="region" aria-label="Photos and video" tabindex="0">
+          <% if (video) { %><figure class="g-item g-video" data-kind="video"><video controls muted playsinline preload="metadata" poster="<%= images[0] ? posterSrc(video, images[0]) : '' %>"><source src="<%= videoSrc(video) %>" type="video/mp4"><a href="<%= videoSrc(video) %>">Watch the walkthrough video</a></video><span class="tag tag-info g-badge"><%- icon('play') %>Video</span></figure><% } %>
+          <% images.forEach(function (m, i) { %><figure class="g-item" data-kind="image" data-full="<%= mediaSrc(m, 'large') %>"><img src="<%= mediaSrc(m, 'large') %>"<% if (mediaSet(m, [480, 900, 1400])) { %> srcset="<%= mediaSet(m, [480, 900, 1400]) %>" sizes="(min-width:1024px) 720px, 100vw"<% } %> <%= m.width ? 'width=' + m.width + ' height=' + m.height : '' %> alt="<%= l.title %>, photo <%= i + 1 %>" <%= i === 0 && !video ? 'fetchpriority=high' : 'loading=lazy' %>></figure><% }) %>
+        </div>
+        <p class="g-count"><%= images.length %> photo<%= images.length === 1 ? '' : 's' %><%= video ? ' and a walkthrough video. Swipe to see more.' : '. Swipe to see more.' %></p>
+      <% } %>
+
+      <div class="detail-head">
+        <h1><%= l.title %></h1>
+        <p class="muted" style="display:flex;gap:6px;align-items:center;margin:0"><%- icon('pin') %><%= typeLabel %> &middot; <%= where %></p>
+        <div class="chips-row">
+          <% if (l.hasRoomShare) { %><span class="tag tag-info"><%- icon('users') %>Roommate needed</span><% } %>
+          <% if (l.campus) { %><span class="tag tag-info"><%- icon('pin') %>Near <%= l.campus.name %></span><% } %>
+          <% if (l.minutesWalk) { %><span class="tag"><%- icon('clock') %><%= l.minutesWalk %> min walk to <%= l.campus ? l.campus.name : 'campus' %></span><% } %>
+          <% if (l.minutesKeke) { %><span class="tag"><%- icon('clock') %><%= l.minutesKeke %> min by keke</span><% } %>
+        </div>
+        <p class="muted small" style="margin:0"><%- icon('check') %> Confirmed available <%= timeAgo(l.lastConfirmedAt || l.publishedAt) || 'recently' %></p>
+      </div>
+
+      <section class="section" aria-labelledby="rooms-h">
+        <h2 id="rooms-h"><%= multi ? 'Rooms and spaces' : 'Price and cost' %></h2>
+        <% l.units.forEach(function (u) { %>
+          <article class="card unit">
+            <div class="unit-head">
+              <div>
+                <h3><%= u.label %></h3>
+                <div class="unit-facts">
+                  <span class="tag tag-info"><%= labelOf(C.UNIT_KINDS, u.kind) %></span>
+                  <% if (u.kind === 'shared_room') { %><span class="tag <%= u.status === 'full' ? 'tag-danger' : u.status === 'partly_taken' ? 'tag-warn' : 'tag-ok' %>"><%= u.status === 'full' ? 'Full' : u.spacesAvailable + ' of ' + u.spacesTotal + ' space' + (u.spacesTotal === 1 ? '' : 's') + ' left' %></span>
+                  <% } else if (u.status === 'full') { %><span class="tag tag-danger">Taken</span><% } %>
+                  <% if (u.genderPreference !== 'any') { %><span class="tag"><%= labelOf(C.GENDERS, u.genderPreference) %></span><% } %>
+                </div>
+              </div>
+              <div class="unit-price"><%= naira(u.rent) %> <span><%= u.kind === 'shared_room' ? 'each, ' : '' %><%= periodLabel(u.period) %></span></div>
+            </div>
+            <% if (u.sharedFacilities && u.sharedFacilities.length) { %><p class="small muted">Shared: <%= u.sharedFacilities.map(function (f) { return labelOf(C.SHARED_FACILITIES, f); }).join(', ') %></p><% } %>
+            <% if (u.notes) { %><p class="small"><%= u.notes %></p><% } %>
+            <%- include('partials/cost', { unit: u, fees: l.fees }) %>
+            <% if (multi && isLive && u.status !== 'full') { %><p style="margin:12px 0 0"><a class="btn btn-ghost btn-sm js-wa" data-listing="<%= l._id %>" href="/lodges/<%= l.slug %>/whatsapp?unit=<%= u._id %>" rel="nofollow noopener" target="_blank"><%- icon('whatsapp') %>Ask about this one</a></p><% } %>
+          </article>
+        <% }) %>
+      </section>
+
+      <section class="section" aria-labelledby="trust-h">
+        <h2 id="trust-h">What has been checked</h2>
+        <ul class="trust">
+          <li class="<%= ver.phoneVerified ? 'on' : 'off' %>"><%- icon(ver.phoneVerified ? 'shield' : 'minus') %><span><%= ver.phoneVerified ? 'Phone number verified' : 'Phone number not verified yet' %></span></li>
+          <li class="<%= ver.idChecked ? 'on' : 'off' %>"><%- icon(ver.idChecked ? 'shield' : 'minus') %><span><%= ver.idChecked ? 'Lister ID checked' : 'Lister ID not checked yet' %></span></li>
+          <li class="<%= l.visited && l.visited.done ? 'on' : 'off' %>"><%- icon(l.visited && l.visited.done ? 'shield' : 'minus') %><span><%= l.visited && l.visited.done ? 'Property visited by Oikres, ' + formatDate(l.visited.at) : 'Not visited by Oikres yet' %></span></li>
+        </ul>
+        <p class="muted small" style="margin-top:8px">Each check is done by the <%= site.name %> team, one at a time. A missing badge does not mean something is wrong, only that it has not been checked.</p>
+      </section>
+
+      <% if (l.description) { %><section class="section"><h2>About this lodge</h2><p style="white-space:pre-line;max-width:70ch"><%= l.description %></p></section><% } %>
+
+      <% if (l.amenities && l.amenities.length) { %>
+        <section class="section"><h2>What this place offers</h2>
+          <ul class="amen"><% l.amenities.forEach(function (a) { %><li><%- icon('check') %><%= labelOf(C.AMENITIES, a) %></li><% }) %></ul>
+        </section>
+      <% } %>
+
+      <section class="section">
+        <a class="card lister-box" href="/u/<%= l.lister %>" style="text-decoration:none;color:inherit">
+          <div class="avatar" aria-hidden="true"><%= (l.listerProfile.displayName || '?').charAt(0).toUpperCase() %></div>
+          <div class="grow">
+            <strong>Listed by <%= l.listerProfile.displayName %></strong>
+            <div class="muted small"><%= l.listerProfile.type === 'landlord' ? 'Landlord' : 'Agent' %><%= l.listerProfile.businessName ? ' \u00B7 ' + l.listerProfile.businessName : '' %></div>
+            <% if (listerRating.count) { %><div class="rating-line"><%- include('partials/stars', { value: listerRating.average }) %><strong><%= listerRating.average.toFixed(1) %></strong><span class="muted small">(<%= listerRating.count %> rating<%= listerRating.count === 1 ? '' : 's' %>)</span></div>
+            <% } else { %><div class="muted small">No reviews yet. View profile</div><% } %>
+          </div>
+          <%- icon('chevron') %>
+        </a>
+        <p class="small" style="margin-top:12px"><a href="/help#safety">Safety tips</a> &middot; <a href="/lodges/<%= l.slug %>/report" rel="nofollow"><%- icon('flag') %> Report this lodge</a></p>
+      </section>
+
+      <% if (similar.length) { %>
+        <section class="section"><h2>More in <%= l.area ? l.area.name : 'this area' %></h2>
+          <div class="grid grid-3-lg"><% similar.forEach(function (s) { %><%- include('partials/card', { l: s, savedSet: savedSet }) %><% }) %></div>
+        </section>
+      <% } %>
+    </div>
+
+    <aside class="detail-side card" aria-label="Contact">
+      <p class="muted small" style="margin:0"><%= multi ? 'From' : 'Rent' %></p>
+      <p class="big"><%= naira(l.priceFrom) %> <span class="muted small" style="font-weight:500"><%= periodLabel(l.periodFrom) %></span></p>
+      <p class="muted small">Initial payment <strong><%= naira(l.moveInFrom) %></strong></p>
+      <% if (isLive) { %><a class="btn btn-wa btn-block js-wa" data-listing="<%= l._id %>" href="/lodges/<%= l.slug %>/whatsapp" rel="nofollow noopener" target="_blank"><%- icon('whatsapp') %>Message on WhatsApp</a>
+      <% } else { %><p class="muted">Contact is not available for this lodge.</p><% } %>
+    </aside>
+  </div>
+</div>
+
+<% if (isLive) { %>
+<div class="actionbar">
+  <div class="ab-price"><small><%= multi ? 'From' : 'Rent' %> <%= periodLabel(l.periodFrom) %></small><strong><%= naira(l.priceFrom) %></strong></div>
+  <a class="btn btn-wa js-wa" data-listing="<%= l._id %>" href="/lodges/<%= l.slug %>/whatsapp" rel="nofollow noopener" target="_blank"><%- icon('whatsapp') %><span><span class="ab-extra">Message on </span>WhatsApp</span></a>
+</div>
+<div class="snack" id="reply-prompt" data-listing="<%= l._id %>" hidden role="dialog" aria-label="Did the agent reply?">
+  <span>Did the agent reply?</span>
+  <span style="display:flex;gap:6px"><button type="button" class="btn btn-ghost btn-sm" data-reply="yes">Yes</button><button type="button" class="btn btn-ghost btn-sm" data-reply="no">Not yet</button></span>
+</div>
+<% } %>
+<%- include('partials/bottom') %>

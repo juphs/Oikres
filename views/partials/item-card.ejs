@@ -1,0 +1,21 @@
+<%
+  const cover = (i.media || []).find(function (m) { return m.type !== 'video'; });
+  const hasVideo = (i.media || []).some(function (m) { return m.type === 'video'; });
+  const photoCount = (i.media || []).filter(function (m) { return m.type !== 'video'; }).length;
+  const where = [i.campus && i.campus.name, i.state && i.state.name].filter(Boolean).join(', ');
+  const sold = i.status === 'sold';
+%>
+<article class="card lodge item">
+  <div class="lodge-media">
+    <% if (cover) { %><img src="<%= mediaSrc(cover, 'card') %>"<% if (mediaSet(cover)) { %> srcset="<%= mediaSet(cover) %>" sizes="(min-width:1024px) 280px, (min-width:720px) 33vw, 50vw"<% } %> width="480" height="360" loading="lazy" decoding="async" alt=""><% } %>
+    <div class="lodge-tags"><span class="tag"><%= labelOf(C.MARKET_CONDITIONS, i.condition) %></span><% if (i.featured) { %><span class="tag tag-warn"><%- icon('star') %>Featured</span><% } %></div>
+    <% const isSaved = !!(locals.savedItems && savedItems.has(i.id)); %><button type="button" class="heart" data-item-heart="<%= i.slug %>" aria-pressed="<%= isSaved ? 'true' : 'false' %>" aria-label="<%= isSaved ? 'Remove from saved' : 'Save item' %>"><%- icon('heart') %></button>
+    <% if (hasVideo || photoCount > 1) { %><div class="lodge-foot-tag"><% if (hasVideo) { %><span class="tag tag-info"><%- icon('play') %>Video</span><% } %><% if (photoCount > 1) { %><span class="tag"><%= photoCount %> photos</span><% } %></div><% } %>
+  </div>
+  <div class="lodge-body">
+    <h3 class="lodge-title"><a href="/market/<%= i.slug %>"><%= i.title %></a></h3>
+    <p class="lodge-meta"><%= labelOf(C.MARKET_CATEGORIES, i.category) %><%= where ? ' \u00B7 ' + where : '' %></p>
+    <% if (sold) { %><p class="price"><span class="tag tag-warn">Sold</span></p>
+    <% } else { %><p class="price"><%= i.price ? naira(i.price) : 'Free' %><% if (i.negotiable) { %> <span>negotiable</span><% } %></p><% } %>
+  </div>
+</article>

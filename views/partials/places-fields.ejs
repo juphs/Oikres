@@ -1,0 +1,10 @@
+<%# State and campus selects. Put them inside an element with data-places so public/js/places.js can narrow the lists. values: { state, campus }. %>
+<% const pe = locals.errors || {}; %>
+<div class="grid-2">
+  <div class="field"><label class="label" for="state">State</label>
+    <select id="state" name="state" data-place="state" class="<%= pe.state ? 'invalid' : '' %>"><option value=""><%= locals.stateNone || 'Choose' %></option><% states.forEach(function (s) { %><option value="<%= s.id %>" <%= String(values.state) === String(s.id) ? 'selected' : '' %>><%= s.name %></option><% }) %></select>
+    <% if (pe.state) { %><div class="error-text"><%= pe.state %></div><% } %></div>
+  <div class="field"><label class="label" for="campus"><%= locals.campusLabel || 'Nearest campus' %></label>
+    <select id="campus" name="campus" data-place="campus" class="<%= pe.campus ? 'invalid' : '' %>"><option value=""><%= locals.campusNone || 'Not near a campus' %></option><% campuses.forEach(function (c) { %><option value="<%= c.id %>" data-state="<%= c.stateId %>" <%= String(values.campus) === String(c.id) ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+    <% if (pe.campus) { %><div class="error-text"><%= pe.campus %></div><% } %></div>
+</div>

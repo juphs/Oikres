@@ -1,0 +1,70 @@
+<%- include('../partials/top') %>
+<% const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; %>
+<div class="container" style="max-width:820px">
+  <h1>Places</h1>
+  <p class="muted">Where lodges and market items can be. Lodge and item forms offer <strong>state, then campus, then area</strong>, and the browse filters use the same lists. To open a new city: add its state, its campuses, then its areas and junctions.</p>
+
+  <h2>States</h2>
+  <div class="stack" style="margin-bottom:16px">
+    <% states.forEach(function (s) { %>
+      <section class="card card-pad row-between">
+        <div><strong><%= s.name %></strong> <span class="tag <%= s.isActive ? 'tag-ok' : '' %>"><%= s.isActive ? 'Active' : 'Hidden' %></span>
+          <span class="muted small">&middot; <%= campuses.filter(function (c) { return c.stateId === s.id; }).length %> campus(es), <%= areas.filter(function (a) { return a.stateId === s.id; }).length %> area(s)</span></div>
+        <form method="post" action="/admin/reference/state/<%= s.id %>/toggle"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%= s.isActive ? 'Hide' : 'Activate' %></button></form>
+      </section>
+    <% }) %>
+  </div>
+  <form method="post" action="/admin/reference/state" class="card card-pad" style="margin-bottom:28px"><%- csrf %>
+    <h3 style="margin-top:0">Add a state</h3>
+    <div class="grid-2"><div class="field"><label class="label" for="sn">Name</label><input id="sn" name="name" type="text" maxlength="60" placeholder="e.g. Enugu" required></div>
+    <div class="field"><label class="label" for="so">Order</label><input id="so" name="order" type="number" value="100" min="0" max="1000"></div></div>
+    <button class="btn btn-primary btn-sm" type="submit">Add state</button>
+  </form>
+
+  <h2>Campuses</h2>
+  <div class="stack" style="margin-bottom:16px">
+    <% if (!campuses.length) { %><p class="muted">No campuses yet.</p><% } %>
+    <% campuses.forEach(function (c) { %>
+      <section class="card card-pad row-between">
+        <div><strong><%= c.name %></strong> <span class="muted small">&middot; <%= c.stateName %></span> <span class="tag <%= c.isActive ? 'tag-ok' : '' %>"><%= c.isActive ? 'Active' : 'Hidden' %></span></div>
+        <form method="post" action="/admin/reference/campus/<%= c.id %>/toggle"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%= c.isActive ? 'Hide' : 'Activate' %></button></form>
+      </section>
+    <% }) %>
+  </div>
+  <form method="post" action="/admin/reference/campus" class="card card-pad" style="margin-bottom:28px"><%- csrf %>
+    <h3 style="margin-top:0">Add a campus</h3>
+    <div class="grid-2"><div class="field"><label class="label" for="cs">State</label><select id="cs" name="state" required><% states.forEach(function (s) { %><option value="<%= s.id %>"><%= s.name %></option><% }) %></select></div>
+    <div class="field"><label class="label" for="cn">Name</label><input id="cn" name="name" type="text" maxlength="60" placeholder="e.g. UNN" required></div></div>
+    <input type="hidden" name="order" value="100"><button class="btn btn-primary btn-sm" type="submit">Add campus</button>
+  </form>
+
+  <h2>Areas and junctions</h2>
+  <form method="post" action="/admin/reference/area" class="card card-pad" style="margin-bottom:16px"><%- csrf %>
+    <h3 style="margin-top:0">Add an area</h3>
+    <div class="grid-2"><div class="field"><label class="label" for="as">State</label><select id="as" name="state" required><% states.forEach(function (s) { %><option value="<%= s.id %>"><%= s.name %></option><% }) %></select></div>
+    <div class="field"><label class="label" for="an">Name</label><input id="an" name="name" type="text" maxlength="60" required></div></div>
+    <div class="field"><label class="label" for="ao">Order</label><input id="ao" name="order" type="number" value="100" min="0" max="1000"></div>
+    <button class="btn btn-primary btn-sm" type="submit">Add area</button>
+  </form>
+  <% states.forEach(function (s) { const list = areas.filter(function (a) { return a.stateId === s.id; }); if (!list.length) return; %>
+    <h3 style="margin:20px 0 8px"><%= s.name %></h3>
+    <div class="stack">
+    <% list.forEach(function (a) { %>
+      <section class="card card-pad">
+        <div class="row-between"><h3 style="margin:0"><%= a.name %> <span class="tag <%= a.isActive ? 'tag-ok' : '' %>"><%= a.isActive ? 'Active' : 'Hidden' %></span></h3>
+          <form method="post" action="/admin/reference/area/<%= a._id %>/toggle"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%= a.isActive ? 'Hide' : 'Activate' %></button></form></div>
+        <div class="chips-row" style="margin-top:10px">
+          <% a.junctions.forEach(function (j) { %>
+            <form method="post" action="/admin/reference/area/<%= a._id %>/remove_junction" style="display:inline"><%- csrf %><input type="hidden" name="junction" value="<%= j %>"><button class="tag" type="submit" style="border:0;cursor:pointer" aria-label="Remove <%= j %>"><%= j %> &times;</button></form>
+          <% }) %>
+          <% if (!a.junctions.length) { %><span class="muted small">No junctions yet.</span><% } %>
+        </div>
+        <form method="post" action="/admin/reference/area/<%= a._id %>/add_junction" class="row-between" style="justify-content:flex-start;margin-top:8px"><%- csrf %>
+          <input type="text" name="junction" maxlength="60" placeholder="Add a junction" aria-label="Junction name" style="width:auto;flex:1;min-width:140px"><button class="btn btn-ghost btn-sm" type="submit">Add</button>
+        </form>
+      </section>
+    <% }) %>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/bottom') %>

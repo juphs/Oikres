@@ -1,0 +1,51 @@
+<%- include('../partials/top') %>
+<% const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; %>
+<div class="container" style="max-width:860px">
+  <h1>Reports</h1>
+  <div class="tabs" role="tablist" aria-label="What was reported">
+    <% [['lodge', 'Lodges'], ['item', 'Items'], ['user', 'People'], ['review', 'Reviews']].forEach(function (t) { %><a href="?type=<%= t[0] %>" <%- type === t[0] ? 'aria-current="page"' : '' %>><%= t[1] %><% if (counts[t[0]]) { %> <span class="count-badge"><%= counts[t[0]] %></span><% } %></a><% }) %>
+  </div>
+  <div class="chips" style="margin-bottom:12px"><% ['open', 'actioned', 'dismissed'].forEach(function (s) { %><a class="tag <%= status === s ? 'tag-info' : '' %>" href="?type=<%= type %>&status=<%= s %>" style="text-decoration:none;padding:6px 14px"><%= s.charAt(0).toUpperCase() + s.slice(1) %></a><% }) %></div>
+  <% if (!reports.length) { %><div class="empty"><h2>Nothing here</h2></div><% } %>
+  <div class="stack">
+  <% reports.forEach(function (r) { %>
+    <article class="card card-pad">
+    <% if (type === 'lodge') { %>
+      <p style="margin:0"><strong><%= labelOf(C.REPORT_REASONS, r.reason) %></strong> <span class="muted small">&middot; <%= timeAgo(r.createdAt) %></span></p>
+      <% if (r.listing) { %><p style="margin:4px 0"><a href="/admin/listings/<%= r.listing._id %>"><%= r.listing.title %></a> <span class="muted small">(<%= statusLabel(r.listing.status) %>) &middot; listed by <a href="/admin/users/<%= r.listing.listerUid %>"><%= r.listing.listerName %></a><%= r.listing.listerBanned ? ' (banned)' : '' %></span></p><% } %>
+      <% if (r.note) { %><p class="small">&ldquo;<%= r.note %>&rdquo;</p><% } %>
+      <% if (r.status === 'open') { %>
+        <div class="actions">
+          <form method="post" action="/admin/reports/<%= r._id %>/dismiss"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Dismiss</button></form>
+          <form method="post" action="/admin/reports/<%= r._id %>/hide" data-confirm="Hide this lodge?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Hide lodge</button></form>
+          <form method="post" action="/admin/reports/<%= r._id %>/suspend_lister" data-confirm="Suspend this lister and hide their lodges and items?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit">Suspend lister</button></form>
+        </div>
+        <% if (r.listing && !r.listing.listerBanned) { %><div style="margin-top:10px"><%- include('../partials/ban-form', { uid: r.listing.listerUid, next: '/admin/reports?type=lodge', label: 'Ban lister' }) %></div><% } %>
+      <% } else { %><form method="post" action="/admin/reports/<%= r._id %>/remove?status=<%= status %>" style="float:right"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('trash') %>Remove</button></form><% } %>
+
+    <% } else { %>
+      <p style="margin:0"><strong><%= labelOf(type === 'item' ? C.ITEM_REPORT_REASONS : type === 'user' ? C.USER_REPORT_REASONS : C.REVIEW_REPORT_REASONS, r.reason) %></strong> <span class="muted small">&middot; <%= timeAgo(r.createdAt) %></span></p>
+      <% if (type === 'item') { %>
+        <p style="margin:4px 0"><% if (r.target.uid) { %><a href="/admin/market/<%= r.target.uid %>"><%= r.target.title %></a> <span class="muted small">(<%= C.MARKET_STATUS_LABELS[r.target.status] %>)</span><% } else { %><span class="muted">Item no longer exists</span><% } %></p>
+        <p class="small muted" style="margin:0">Seller: <a href="/admin/users/<%= r.subject.uid %>"><%= r.subject.name %></a><%= r.subject.banned ? ' (banned)' : '' %></p>
+      <% } else if (type === 'user') { %>
+        <p style="margin:4px 0">Person reported: <a href="/admin/users/<%= r.subject.uid %>"><%= r.subject.name %></a><%= r.subject.banned ? ' (banned)' : '' %> &middot; <a href="/u/<%= r.subject.uid %>">public profile</a></p>
+      <% } else { %>
+        <% if (r.target.uid) { %><blockquote class="small" style="margin:6px 0;padding-left:10px;border-left:3px solid var(--border)"><%- include('../partials/stars', { value: r.target.rating }) %> <%= r.target.body || '(no comment)' %><br><span class="muted">About <a href="/admin/users/<%= r.target.aboutUid %>"><%= r.target.about %></a> (<%= r.target.status %>)</span></blockquote><% } else { %><p class="muted">Review no longer exists</p><% } %>
+        <p class="small muted" style="margin:0">Written by <a href="/admin/users/<%= r.subject.uid %>"><%= r.subject.name %></a><%= r.subject.banned ? ' (banned)' : '' %></p>
+      <% } %>
+      <% if (r.note) { %><p class="small">&ldquo;<%= r.note %>&rdquo;</p><% } %>
+      <% if (r.status === 'open') { %>
+        <div class="actions">
+          <form method="post" action="/admin/flags/<%= r._id %>/dismiss"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Dismiss</button></form>
+          <% if (type === 'item' && r.target.uid && ['live', 'pending'].indexOf(r.target.status) > -1) { %><form method="post" action="/admin/flags/<%= r._id %>/hide_item" data-confirm="Hide this item?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Hide item</button></form><% } %>
+          <% if (type === 'review' && r.target.uid && r.target.status === 'visible') { %><form method="post" action="/admin/flags/<%= r._id %>/remove_review" data-confirm="Remove this review? The author cannot post another about this person."><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Remove review</button></form><% } %>
+        </div>
+        <% if (!r.subject.banned) { %><div style="margin-top:10px"><%- include('../partials/ban-form', { uid: r.subject.uid, next: '/admin/reports?type=' + type, label: type === 'item' ? 'Ban seller' : type === 'review' ? 'Ban author' : 'Ban account' }) %></div><% } %>
+      <% } else { %><form method="post" action="/admin/flags/<%= r._id %>/remove?status=<%= status %>" style="float:right"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('trash') %>Remove</button></form><% } %>
+    <% } %>
+    </article>
+  <% }) %>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

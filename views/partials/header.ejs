@@ -1,0 +1,12 @@
+<header class="topbar">
+  <div class="container topbar-in">
+    <%- include('logo') %>
+    <div class="topright">
+      <% if (user) { %>
+        <a class="icon-btn" href="/account/notifications" aria-label="Notifications<%= unread ? ', ' + unread + ' unread' : '' %>"><%- icon('bell') %><% if (unread) { %><span class="dot"></span><% } %></a>
+      <% } else { %>
+        <a class="btn btn-ghost btn-sm" href="/login?returnTo=<%= encodeURIComponent(path === '/login' || path === '/register' ? '/' : path) %>">Sign in</a>
+      <% } %>
+    </div>
+  </div>
+</header>

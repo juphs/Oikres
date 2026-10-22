@@ -1,0 +1,14 @@
+<%- include('../partials/top') %>
+<div class="container narrow" style="max-width:640px">
+  <h1>Notifications</h1>
+  <% if (!items.length) { %>
+    <div class="empty"><%- icon('bell') %><h2>Nothing yet</h2><p class="muted">Updates about your lodges and account show up here.</p></div>
+  <% } else { %>
+    <div class="card"><ul class="list">
+      <% items.forEach(function (n) { %>
+        <li><a class="list-item" href="<%= n.link || '#' %>"><span class="grow"><strong><%= n.title %></strong><br><span class="muted small"><%= n.body %></span><br><span class="muted small"><%= timeAgo(n.createdAt) %></span></span><%- icon('chevron') %></a></li>
+      <% }) %>
+    </ul></div>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

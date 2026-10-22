@@ -1,0 +1,32 @@
+<%- include('../partials/top') %>
+<% const v = profile.verification; %>
+<div class="container narrow" style="max-width:640px">
+  <h1>Lister profile</h1>
+  <section class="card" style="margin-bottom:16px">
+    <ul class="list">
+      <li class="list-item"><span class="grow"><strong>Phone number</strong><br><span class="muted small"><%= profile.whatsappNumber %></span></span><span class="tag <%= v.phoneVerified ? 'tag-ok' : 'tag-warn' %>"><%= v.phoneVerified ? 'Verified' : 'Pending' %></span></li>
+      <li class="list-item"><span class="grow"><strong>Identity document</strong><br><span class="muted small"><%= v.idStatus === 'approved' ? 'Checked by Oikres' : v.idStatus === 'submitted' ? 'Waiting for an Oikres admin to check it' : v.idStatus === 'rejected' ? 'Could not be checked' + (v.idNote ? ': ' + v.idNote : '') + '. Upload a clearer photo.' : 'Not uploaded. Optional, earns the ID checked badge.' %></span></span><span class="tag <%= v.idChecked ? 'tag-ok' : v.idStatus === 'rejected' ? 'tag-danger' : 'tag-warn' %>"><%= v.idChecked ? 'Checked' : v.idStatus === 'rejected' ? 'Rejected' : 'Pending' %></span></li>
+    </ul>
+  </section>
+  <p class="muted small">The <%= site.name %> team confirms your phone by call or WhatsApp and checks your ID by hand. Badges are never added automatically. The Property visited badge is added to individual lodges after a visit.</p>
+  <form class="card card-pad" method="post" action="/lister/profile" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <div class="field"><label class="label" for="displayName">Name tenants will see</label><input id="displayName" name="displayName" type="text" value="<%= profile.displayName %>" maxlength="60" required class="<%= errors.displayName ? 'invalid' : '' %>"><% if (errors.displayName) { %><div class="error-text"><%= errors.displayName %></div><% } %></div>
+    <div class="field"><label class="label" for="businessName">Business or agency name</label><input id="businessName" name="businessName" type="text" value="<%= profile.businessName || '' %>" maxlength="60"></div>
+    <fieldset class="field"><legend class="label">I am a</legend><div class="chips">
+      <label class="chip-toggle"><input type="radio" name="type" value="agent" <%= profile.type === 'agent' ? 'checked' : '' %>><span>Agent</span></label>
+      <label class="chip-toggle"><input type="radio" name="type" value="landlord" <%= profile.type === 'landlord' ? 'checked' : '' %>><span>Landlord</span></label></div></fieldset>
+    <div class="field"><label class="label" for="whatsapp">WhatsApp number</label><input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" value="<%= profile.whatsappNumber %>" required class="<%= errors.whatsapp ? 'invalid' : '' %>"><div class="hint">If you change this number it has to be verified again.</div><% if (errors.whatsapp) { %><div class="error-text"><%= errors.whatsapp %></div><% } %></div>
+    <div class="field"><span class="label"><%= v.idDocument && v.idDocument.publicId ? 'Replace ID document' : 'Upload ID document' %></span>
+      <div class="js-id-upload">
+        <select name="idType" aria-label="ID type" style="margin-bottom:8px"><% C.ID_TYPES.forEach(function (t) { %><option value="<%= t.value %>" <%= v.idType === t.value ? 'selected' : '' %>><%= t.label %></option><% }) %></select>
+        <label class="file-pick"><input type="file" accept="image/*" aria-label="Photo of your ID"><span class="pick-btn"><%- icon('upload') %>Choose photo</span><span class="pick-name">No file chosen</span></label>
+        <input type="hidden" name="idPublicId" value="">
+        <p class="hint js-status">Only <%= site.name %> admins can see it. It is deleted 30 days after we decide.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Save profile</button>
+  </form>
+  <p class="center" style="margin-top:16px"><a href="/account">Account settings</a></p>
+</div>
+<%- include('../partials/bottom', { scripts: ['uploader.js'] }) %>

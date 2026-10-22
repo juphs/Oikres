@@ -1,0 +1,15 @@
+<%# An administrator's ad, drawn like a lodge/market card. The link goes through /ads/:uid/go so clicks are counted. %>
+<% const href = ad.linkType === 'none' ? '' : '/ads/' + ad._id + '/go'; const ext = ad.linkType === 'url' || ad.linkType === 'whatsapp'; %>
+<article class="card lodge ad">
+  <div class="lodge-media">
+    <% if (ad.videoUrl) { %><video class="ad-video" src="<%= ad.videoUrl %>" poster="<%= ad.thumbUrl || ad.imageUrl || '' %>" muted loop playsinline preload="metadata" data-autoplay-view aria-hidden="true" tabindex="-1"></video>
+    <% } else if (ad.imageUrl) { %><img src="<%= ad.thumbUrl || ad.imageUrl %>" width="480" height="360" loading="lazy" decoding="async" alt=""><% } else { %><div class="ad-textfill" aria-hidden="true"><%- icon('megaphone') %></div><% } %>
+    <div class="lodge-tags"><span class="tag tag-ad"><%= ad.badge || 'Ad' %></span></div>
+  </div>
+  <div class="lodge-body">
+    <h3 class="lodge-title"><% if (href) { %><a href="<%= href %>" rel="sponsored nofollow noopener"<%- ext ? ' target="_blank"' : '' %>><%= ad.title %></a><% } else { %><%= ad.title %><% } %></h3>
+    <% if (ad.sponsor) { %><p class="lodge-meta">Sponsored by <%= ad.sponsor %></p><% } %>
+    <% if (ad.body) { %><p class="ad-text"><%= ad.body %></p><% } %>
+    <% if (href && ad.buttonLabel) { %><p class="ad-cta"><span class="btn btn-primary btn-sm"><%= ad.buttonLabel %></span></p><% } %>
+  </div>
+</article>

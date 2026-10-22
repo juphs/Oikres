@@ -1,0 +1,33 @@
+<%
+  const cover = (l.media || []).find(function (m) { return m.type === 'image'; });
+  const hasVideo = (l.media || []).some(function (m) { return m.type === 'video'; });
+  const saved = savedSet.has(String(l._id));
+  const ver = (l.listerProfile && l.listerProfile.verification) || {};
+  const where = [l.junction, l.area && l.area.name].filter(Boolean).join(', ');
+  const typeLabel = labelOf(C.PROPERTY_TYPES, l.propertyType);
+  const rented = l.status === 'rented';
+%>
+<article class="card lodge">
+  <div class="lodge-media">
+    <% if (cover) { %>
+      <img src="<%= mediaSrc(cover, 'card') %>"<% if (mediaSet(cover)) { %> srcset="<%= mediaSet(cover) %>" sizes="(min-width:1024px) 280px, (min-width:720px) 33vw, 50vw"<% } %> width="480" height="360" loading="lazy" decoding="async" alt="">
+    <% } %>
+    <div class="lodge-tags">
+      <% if (l.visited && l.visited.done) { %><span class="tag"><%- icon('check') %>Visited</span><% } %>
+      <% if (ver.idChecked) { %><span class="tag"><%- icon('shield') %>ID checked</span><% } %>
+    </div>
+    <% if (l.hasRoomShare) { %><div class="lodge-foot-tag"><span class="tag"><%- icon('users') %>Roommate needed</span></div><% } %>
+    <% if (hasVideo) { %><span class="play" aria-hidden="true"><%- icon('play') %></span><% } %>
+  </div>
+  <button type="button" class="heart" data-heart="<%= l._id %>" aria-pressed="<%= saved ? 'true' : 'false' %>" aria-label="<%= saved ? 'Remove from saved' : 'Save lodge' %>"><%- icon('heart') %></button>
+  <div class="lodge-body">
+    <h3 class="lodge-title"><a href="/lodges/<%= l.slug %>"><%= l.title %></a></h3>
+    <p class="lodge-meta"><%= typeLabel %><%= where ? ' \u00B7 ' + where : '' %></p>
+    <% if (rented) { %>
+      <p class="price"><span class="tag tag-warn">Rented</span></p>
+    <% } else { %>
+      <p class="price"><%= l.units && l.units.length > 1 ? 'From ' : '' %><%= naira(l.priceFrom) %> <span><%= periodLabel(l.periodFrom) %></span></p>
+      <p class="movein">Initial payment <%= naira(l.moveInFrom) %></p>
+    <% } %>
+  </div>
+</article>

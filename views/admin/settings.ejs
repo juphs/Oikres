@@ -1,0 +1,114 @@
+<%- include('../partials/top') %>
+<%
+  const T = cur.theme;
+  const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">';
+  const keys = [['primary', 'Brand colour', 'Buttons, links and highlights'], ['bg', 'Page background', ''], ['surface', 'Cards and panels', ''], ['text', 'Text', ''], ['muted', 'Soft text', 'Hints and captions'], ['border', 'Borders', '']];
+  const presets = [['Sky', '#0369A1', '#38BDF8'], ['Teal', '#0F766E', '#2DD4BF'], ['Emerald', '#047857', '#34D399'], ['Violet', '#6D28D9', '#A78BFA'], ['Rose', '#BE123C', '#FB7185'], ['Orange', '#C2410C', '#FB923C'], ['Slate', '#334155', '#94A3B8']];
+  const tabs = [['general', 'General'], ['branding', 'Logo and icon'], ['theme', 'Colours'], ['rules', 'Rules and access'], ['notices', 'Notices']];
+%>
+<div class="container" style="max-width:860px">
+  <h1>Site settings</h1>
+  <p class="muted">Changes go live as soon as you press Save. Nothing here needs a restart.</p>
+  <nav class="tabs" aria-label="Settings sections"><% tabs.forEach(function (t) { %><a href="?section=<%= t[0] %>" <%- section === t[0] ? 'aria-current="page"' : '' %>><%= t[1] %></a><% }) %></nav>
+
+  <% if (section === 'general') { %>
+  <form class="card card-pad" method="post" action="/admin/settings/general" novalidate><%- csrf %>
+    <h2>Name and contact</h2>
+    <div class="field"><label class="label" for="name">Site name</label><input id="name" name="name" type="text" maxlength="40" value="<%= cur.name %>" required><div class="hint">Shown in the header, emails, browser tab and when someone installs the app.</div></div>
+    <div class="field"><label class="label" for="tagline">Tagline</label><input id="tagline" name="tagline" type="text" maxlength="80" value="<%= cur.tagline %>"></div>
+    <div class="field"><label class="label" for="description">Short description (search engines and link previews)</label><textarea id="description" name="description" maxlength="200" style="min-height:80px"><%= cur.description %></textarea></div>
+    <div class="field"><label class="label" for="domain">Web address</label><input id="domain" name="domain" type="text" maxlength="80" value="<%= cur.domain %>" placeholder="oikres.com"><div class="hint">Shown in the footer. The address the site really runs on is BASE_URL in <code>.env</code>.</div></div>
+    <h2 style="margin-top:24px">Help and WhatsApp</h2>
+    <div class="field"><label class="label" for="whatsapp">Admin WhatsApp number</label><input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" value="<%= cur.whatsapp ? '+' + cur.whatsapp : '' %>" placeholder="0801 234 5678">
+      <div class="hint">People tap this on the Help page and footer to chat with you. <%= !cur.whatsapp && envWhatsapp ? 'Currently using SUPPORT_WHATSAPP from .env (' + envWhatsapp + ').' : 'If empty, SUPPORT_WHATSAPP from .env is used, then the first administrator\'s phone number.' %></div></div>
+    <div class="field"><label class="label" for="wam">First message in the chat</label><input id="wam" name="whatsappMessage" type="text" maxlength="200" value="<%= cur.whatsappMessage %>"><div class="hint">Use {site} for the site name.</div></div>
+    <div class="field"><label class="label" for="se">Support email</label><input id="se" name="supportEmail" type="email" maxlength="120" value="<%= cur.supportEmail %>"></div>
+    <div class="field"><label class="label" for="fn">Footer note (optional)</label><input id="fn" name="footerNote" type="text" maxlength="120" value="<%= cur.footerNote %>" placeholder="e.g. Registered in Nigeria"></div>
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+  <% } %>
+
+  <% if (section === 'branding') { %>
+  <form class="card card-pad" method="post" action="/admin/settings/branding" novalidate><%- csrf %>
+    <h2>Logo and icon</h2>
+    <p class="muted small">PNG, JPG or WebP up to 3 MB. A transparent PNG works best. Without a logo, the site shows a house mark and the site name.</p>
+    <% [['logoUrl', 'Logo', 'Header and sidebar. Wide or square, about 200 pixels tall is plenty.'], ['logoDarkUrl', 'Logo for dark mode (optional)', 'Used instead when the device is in dark mode. Leave empty to reuse the main logo.'], ['iconUrl', 'App icon (square)', 'Browser tab and the installed app. Use a square PNG, 512 by 512 pixels.']].forEach(function (f) { %>
+      <div class="field js-site-upload" data-empty="<%= f[0] === 'iconUrl' ? 'Using the default icon' : 'No logo set' %>">
+        <span class="label"><%= f[1] %></span>
+        <div class="logo-preview" aria-live="polite"></div>
+        <input type="hidden" name="<%= f[0] %>" value="<%= cur[f[0]] %>">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <label class="file-pick" style="flex:1;min-width:220px"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="<%= f[1] %> file"><span class="pick-btn"><%- icon('upload') %>Choose image</span><span class="pick-name">No file chosen</span></label>
+          <button type="button" class="btn btn-ghost btn-sm js-remove">Remove</button>
+        </div>
+        <p class="hint js-status"><%= f[2] %></p>
+      </div>
+    <% }) %>
+    <button class="btn btn-primary" type="submit">Save logo and icon</button>
+  </form>
+  <% } %>
+
+  <% if (section === 'theme') { %>
+  <form class="card card-pad" method="post" action="/admin/settings/theme" id="theme-form" novalidate autocomplete="off"><%- csrf %>
+    <h2>Colours</h2>
+    <p class="muted small">Pick any colour, including see-through ones. Light and dark mode are set separately, and each person sees the one their device uses. Tap a swatch to open the picker, or type a value like <code>#0369A1</code> or <code>rgba(3, 105, 161, 0.9)</code>.</p>
+    <div class="preset-row" aria-label="Quick colour presets"><% presets.forEach(function (p) { %><button type="button" data-preset='<%= JSON.stringify({ light: p[1], dark: p[2] }) %>'><i style="background:<%= p[1] %>"></i><%= p[0] %></button><% }) %></div>
+    <div class="theme-previews">
+      <% ['light', 'dark'].forEach(function (mode) { const m = T[mode]; %>
+        <div class="tp" data-mode="<%= mode %>" style="--tp-bg:<%= m.bg %>;--tp-surface:<%= m.surface %>;--tp-text:<%= m.text %>;--tp-muted:<%= m.muted %>;--tp-border:<%= m.border %>;--tp-primary:<%= m.primary %>;--tp-on:#fff;--tp-radius:<%= T.radius %>">
+          <strong><%= mode === 'light' ? 'Light mode preview' : 'Dark mode preview' %></strong>
+          <div class="tp-card"><div>Self-contain near campus</div><div class="tp-muted">Ifite &middot; <span class="tp-link">View lodge</span></div><span class="tp-btn">Message on WhatsApp</span></div>
+        </div>
+      <% }) %>
+    </div>
+    <% ['light', 'dark'].forEach(function (mode) { %>
+      <h3 style="margin-top:8px"><%= mode === 'light' ? 'Light mode' : 'Dark mode' %></h3>
+      <div class="color-grid" style="margin-bottom:16px">
+        <% keys.forEach(function (k) { %>
+          <div class="color-field">
+            <label class="label" for="<%= mode %>_<%= k[0] %>"><%= k[1] %><% if (k[2]) { %><span class="hint" style="display:block;font-weight:400;margin:0"><%= k[2] %></span><% } %></label>
+            <input class="js-color" id="<%= mode %>_<%= k[0] %>" name="<%= mode %>_<%= k[0] %>" type="text" value="<%= T[mode][k[0]] %>" spellcheck="false" autocomplete="off" maxlength="40">
+            <button type="button" class="swatch" aria-label="Open the colour picker for <%= k[1].toLowerCase() %> (<%= mode %> mode)"><i></i></button>
+          </div>
+        <% }) %>
+      </div>
+    <% }) %>
+    <div class="field" style="max-width:240px"><label class="label" for="radius">Corner roundness (4 to 28)</label><input id="radius" name="radius" type="number" min="4" max="28" value="<%= T.radius %>"></div>
+    <div class="actions"><button class="btn btn-primary" type="submit">Save colours</button></div>
+  </form>
+  <form method="post" action="/admin/settings/reset-theme" style="margin-top:12px" data-confirm="Reset every colour to the default theme?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Reset to the default theme</button></form>
+  <% } %>
+
+  <% if (section === 'rules') { %>
+  <form class="card card-pad" method="post" action="/admin/settings/rules" novalidate><%- csrf %>
+    <h2>Access</h2>
+    <label class="switch"><span><strong>Open sign-ups</strong><br><span class="muted small">Turn off to pause new registrations. Existing people can still sign in.</span></span><input type="checkbox" name="registrationOpen" <%= cur.registrationOpen ? 'checked' : '' %>></label>
+    <label class="switch"><span><strong>Review lodges before they go live</strong><br><span class="muted small">Recommended. Turn off only if you fully trust your listers: lodges then publish the moment they are submitted.</span></span><input type="checkbox" name="reviewRequired" <%= cur.reviewRequired ? 'checked' : '' %>></label>
+    <label class="switch"><span><strong>Review market items before they go live</strong><br><span class="muted small">Off by default so students can sell quickly. Items still get hidden automatically after several reports. Turn on if you see scams.</span></span><input type="checkbox" name="marketReviewRequired" <%= site.marketReviewRequired ? 'checked' : '' %>></label>
+    <h2 style="margin-top:24px">Lodge rules</h2>
+    <div class="grid-2">
+      <div class="field"><label class="label" for="r1">Ask listers to reconfirm after (days)</label><input id="r1" name="reconfirmEveryDays" type="number" min="3" max="60" value="<%= cur.rules.reconfirmEveryDays %>"></div>
+      <div class="field"><label class="label" for="r2">Hide an unconfirmed lodge after (days)</label><input id="r2" name="hideAfterDays" type="number" min="5" max="120" value="<%= cur.rules.hideAfterDays %>"></div>
+      <div class="field"><label class="label" for="r3">Hide a lodge after this many reports</label><input id="r3" name="reportsToAutoHide" type="number" min="1" max="20" value="<%= cur.rules.reportsToAutoHide %>"></div>
+      <div class="field"><label class="label" for="r4">Minimum photos per lodge</label><input id="r4" name="minPhotos" type="number" min="1" max="10" value="<%= cur.rules.minPhotos %>"></div>
+    </div>
+    <button class="btn btn-primary" type="submit">Save rules</button>
+  </form>
+  <% } %>
+
+  <% if (section === 'notices') { %>
+  <form class="card card-pad" method="post" action="/admin/settings/notices" novalidate><%- csrf %>
+    <h2>Announcement banner</h2>
+    <p class="muted small">A strip across the top of every page. Good for news, holidays or a new rule.</p>
+    <label class="switch"><span><strong>Show the banner</strong></span><input type="checkbox" name="announcementEnabled" <%= cur.announcement.enabled ? 'checked' : '' %>></label>
+    <div class="field"><label class="label" for="at">Message</label><input id="at" name="announcementText" type="text" maxlength="200" value="<%= cur.announcement.text %>"></div>
+    <div class="field" style="max-width:260px"><label class="label" for="atone">Style</label><select id="atone" name="announcementTone"><option value="info" <%= cur.announcement.tone === 'info' ? 'selected' : '' %>>Brand colour</option><option value="warn" <%= cur.announcement.tone === 'warn' ? 'selected' : '' %>>Warning</option><option value="success" <%= cur.announcement.tone === 'success' ? 'selected' : '' %>>Good news</option></select></div>
+    <h2 style="margin-top:24px">Maintenance mode</h2>
+    <p class="muted small">While on, everyone except administrators sees a pause page. You stay signed in and can keep working.</p>
+    <label class="switch"><span><strong>Turn maintenance mode on</strong></span><input type="checkbox" name="maintenanceEnabled" <%= cur.maintenance.enabled ? 'checked' : '' %>></label>
+    <div class="field"><label class="label" for="mm">Message shown to visitors</label><input id="mm" name="maintenanceMessage" type="text" maxlength="200" value="<%= cur.maintenance.message %>"></div>
+    <button class="btn btn-primary" type="submit">Save notices</button>
+  </form>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,86 @@
+<%- include('../partials/top') %>
+<%
+  const sold = i.status === 'sold';
+  const images = i.media.filter(function (m) { return m.type !== 'video'; });
+  const video = i.media.find(function (m) { return m.type === 'video'; });
+%>
+<div class="container detail">
+  <div class="detail-top">
+    <a class="icon-btn" href="/market" data-back aria-label="Back to the market"><%- icon('arrow-left') %></a>
+    <div class="row-actions" style="display:flex;gap:4px"><% const isSaved = savedItems.has(i.id); %><button type="button" class="icon-btn heart-inline" data-item-heart="<%= i.slug %>" aria-pressed="<%= isSaved ? 'true' : 'false' %>" aria-label="<%= isSaved ? 'Remove from saved' : 'Save item' %>"><%- icon('heart') %></button><button type="button" class="icon-btn" data-share="<%= url %>" aria-label="Share this item"><%- icon('share') %></button></div>
+  </div>
+  <% if (sold) { %><div class="alert alert-warn">This item has been sold. <a href="/market">Browse the market</a></div><% } %>
+  <% if (expiredLive) { %><div class="alert alert-warn">This listing has expired, so it is no longer in the market. <% if (isOwner) { %>You can renew it from <a href="/market/mine">Your items</a>.<% } else { %><a href="/market">Browse the market</a><% } %></div><% } %>
+  <% if (!live && !sold && !expiredLive) { %><div class="alert alert-info">Preview: only you and the <%= site.name %> team can see this page. Status: <strong><%= C.MARKET_STATUS_LABELS[i.status] %></strong>. <% if (isOwner) { %><a href="/market/<%= i.slug %>/edit">Edit item</a><% } %></div><% } %>
+
+  <div class="detail-grid">
+    <div class="detail-main">
+      <% if (i.media.length) { %>
+        <div class="gallery" data-gallery role="region" aria-label="<%= video ? 'Video and photos' : 'Photos' %>" tabindex="0">
+          <% if (video) { %><figure class="g-item g-video" data-kind="video"><video controls muted playsinline preload="metadata" poster="<%= images[0] ? posterSrc(video, images[0]) : '' %>"><source src="<%= videoSrc(video) %>" type="video/mp4"><a href="<%= videoSrc(video) %>">Watch the video</a></video><span class="tag tag-info g-badge"><%- icon('play') %>Video</span></figure><% } %>
+          <% images.forEach(function (m, n) { %><figure class="g-item" data-kind="image" data-full="<%= mediaSrc(m, 'large') %>"><img src="<%= mediaSrc(m, 'large') %>"<% if (mediaSet(m, [480, 900, 1400])) { %> srcset="<%= mediaSet(m, [480, 900, 1400]) %>" sizes="(min-width:1024px) 720px, 100vw"<% } %> <%= m.width ? 'width=' + m.width + ' height=' + m.height : '' %> alt="<%= i.title %>, photo <%= n + 1 %>" <%= n === 0 ? 'fetchpriority=high' : 'loading=lazy' %>></figure><% }) %>
+        </div>
+        <p class="g-count"><%= video ? 'Video and ' : '' %><%= images.length %> photo<%= images.length === 1 ? '' : 's' %><%= i.media.length > 1 ? '. Swipe to see more.' : '' %></p>
+      <% } %>
+
+      <div class="detail-head">
+        <h1><%= i.title %></h1>
+        <p class="big-price"><%= i.price ? naira(i.price) : 'Free' %><% if (i.negotiable) { %> <span class="tag tag-info">Negotiable</span><% } %></p>
+        <div class="chips-row">
+          <span class="tag"><%= conditionLabel %></span><span class="tag"><%= categoryLabel %></span>
+          <% if (where) { %><span class="tag"><%- icon('pin') %><%= where %></span><% } %>
+        </div>
+        <p class="muted small" style="margin:0">Posted <%= timeAgo(i.publishedAt || i.createdAt) %></p>
+      </div>
+
+      <section class="section"><h2>About this item</h2><p style="white-space:pre-line;max-width:70ch"><%= i.description %></p></section>
+
+      <section class="section">
+        <a class="card lister-box" href="/u/<%= i.seller.uid %>" style="text-decoration:none;color:inherit">
+          <div class="avatar" aria-hidden="true"><%= i.seller.name.charAt(0).toUpperCase() %></div>
+          <div class="grow">
+            <strong>Sold by <%= i.seller.name %></strong>
+            <div class="chips-row" style="margin:4px 0 0">
+              <% if (sellerVerified) { %><span class="tag tag-ok"><%- icon('check') %>Email verified</span><% } %>
+              <% if (lister && lister.verification.phoneVerified) { %><span class="tag tag-ok"><%- icon('shield') %>Phone verified</span><% } %>
+              <% if (lister && lister.verification.idChecked) { %><span class="tag tag-ok"><%- icon('shield') %>ID checked</span><% } %>
+            </div>
+            <% if (sellerRating.count) { %><div class="rating-line"><%- include('../partials/stars', { value: sellerRating.average }) %><strong><%= sellerRating.average.toFixed(1) %></strong><span class="muted small">(<%= sellerRating.count %> rating<%= sellerRating.count === 1 ? '' : 's' %>)</span></div>
+            <% } else { %><div class="muted small">No reviews yet. View profile</div><% } %>
+          </div>
+          <%- icon('chevron') %>
+        </a>
+        <div class="card card-pad safety">
+          <strong>Stay safe</strong>
+          <ul class="small muted" style="margin:6px 0 0;padding-left:18px">
+            <li>Meet in a busy place on campus and check the item before you pay.</li>
+            <li>Never send money ahead for delivery or to &ldquo;hold&rdquo; an item.</li>
+            <li>Look at the seller's reviews first.</li>
+          </ul>
+        </div>
+        <p class="small" style="margin-top:12px"><a href="/help#market-safety">Safety tips</a> &middot; <a href="/market/<%= i.slug %>/report" rel="nofollow"><%- icon('flag') %> Report this item</a></p>
+      </section>
+
+      <% if (similar.length) { %>
+        <section class="section"><h2>More in <%= categoryLabel %></h2>
+          <div class="grid grid-3-lg"><% similar.forEach(function (s) { %><%- include('../partials/item-card', { i: s, savedItems: savedItems }) %><% }) %></div>
+        </section>
+      <% } %>
+    </div>
+
+    <aside class="detail-side card" aria-label="Contact">
+      <p class="big"><%= i.price ? naira(i.price) : 'Free' %></p>
+      <% if (live && !isOwner) { %><a class="btn btn-wa btn-block" href="/market/<%= i.slug %>/whatsapp" rel="nofollow noopener" target="_blank"><%- icon('whatsapp') %>Message seller on WhatsApp</a>
+      <% } else if (isOwner) { %><a class="btn btn-ghost btn-block" href="/market/<%= i.slug %>/edit"><%- icon('edit') %>Edit this item</a>
+      <% } else { %><p class="muted">Contact is not available for this item.</p><% } %>
+    </aside>
+  </div>
+</div>
+<% if (live && !isOwner) { %>
+<div class="actionbar">
+  <div class="ab-price"><small>Price</small><strong><%= i.price ? naira(i.price) : 'Free' %></strong></div>
+  <a class="btn btn-wa" href="/market/<%= i.slug %>/whatsapp" rel="nofollow noopener" target="_blank"><%- icon('whatsapp') %><span><span class="ab-extra-s">Message </span>seller</span></a>
+</div>
+<% } %>
+<% if (jsonLd) { %><script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c') %></script><% } %>
+<%- include('../partials/bottom') %>

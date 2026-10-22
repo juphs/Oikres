@@ -1,0 +1,103 @@
+<%- include('partials/top') %>
+<%
+  const ver = (lp && lp.verification) || {};
+  const first = (p.name || '?').charAt(0).toUpperCase();
+  const myStars = mine ? mine.rating : 0;
+%>
+<div class="container" style="max-width:900px">
+  <div class="detail-top">
+    <a class="icon-btn" href="/" data-back aria-label="Back"><%- icon('arrow-left') %></a>
+    <div><button type="button" class="icon-btn" data-share="<%= url %>" aria-label="Share this profile"><%- icon('share') %></button></div>
+  </div>
+
+  <% if (banned) { %><div class="alert alert-error" role="alert"><strong>This account was banned.</strong> It broke the <%= site.name %> rules and can no longer be used. Its lodges and items are removed.</div><% } %>
+  <% if (!banned && !active) { %><div class="alert alert-warn">This account is suspended. Only administrators can see this page.</div><% } %>
+
+  <header class="card card-pad profile-head">
+    <div class="avatar avatar-lg" aria-hidden="true"><%= first %></div>
+    <div class="grow">
+      <h1 style="margin:0"><%= p.name %></h1>
+      <p class="muted small" style="margin:2px 0 8px">Member since <%= formatDate(p.createdAt) %><% if (lp) { %> &middot; <%= lp.type === 'landlord' ? 'Landlord' : 'Agent' %><%= lp.businessName ? ', ' + lp.businessName : '' %><% } %></p>
+      <div class="chips-row" style="margin:0">
+        <% if (p.emailVerifiedAt) { %><span class="tag tag-ok"><%- icon('check') %>Email verified</span><% } %>
+        <% if (ver.phoneVerified) { %><span class="tag tag-ok"><%- icon('shield') %>Phone verified</span><% } %>
+        <% if (ver.idChecked) { %><span class="tag tag-ok"><%- icon('shield') %>ID checked</span><% } %>
+      </div>
+    </div>
+  </header>
+
+  <section class="card card-pad rating-card" id="reviews" aria-labelledby="rating-h">
+    <h2 id="rating-h" class="sr-only">Ratings and reviews</h2>
+    <% if (summary.count) { %>
+      <div class="rating-big"><strong><%= summary.average.toFixed(1) %></strong><%- include('partials/stars', { value: summary.average, size: 'lg' }) %>
+        <span class="muted"><%= summary.count %> rating<%= summary.count === 1 ? '' : 's' %></span></div>
+      <ul class="dist" aria-label="Rating breakdown">
+        <% [5, 4, 3, 2, 1].forEach(function (n) { const c = summary.stars[n]; %>
+          <li><span><%= n %> star<%= n === 1 ? '' : 's' %></span><span class="dbar"><i style="width:<%= Math.round(c / summary.count * 100) %>%"></i></span><span class="muted"><%= c %></span></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <div class="rating-big"><%- include('partials/stars', { value: 0, size: 'lg' }) %><span class="muted">No ratings yet</span></div>
+    <% } %>
+  </section>
+
+  <% if (!isSelf && active) { %>
+    <section class="card card-pad" aria-labelledby="write-h">
+      <h2 id="write-h"><%= mine ? 'Your review' : 'Rate ' + p.name %></h2>
+      <% if (!user) { %>
+        <p class="muted">Dealt with <%= p.name.split(' ')[0] %>? Help others decide. <a href="/login?returnTo=<%= encodeURIComponent('/u/' + p.uid) %>">Sign in</a> to leave a rating.</p>
+      <% } else if (!user.emailVerifiedAt) { %>
+        <p class="muted">Verify your email address to leave a review.</p>
+      <% } else if (mine && mine.status === 'removed') { %>
+        <p class="muted">Your earlier review was removed by the team.</p>
+      <% } else { %>
+        <form method="post" action="/u/<%= p.uid %>/review">
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+          <fieldset class="field"><legend class="label">Your rating</legend>
+            <div class="rate-input">
+              <% [5, 4, 3, 2, 1].forEach(function (n) { %><input type="radio" id="rate<%= n %>" name="rating" value="<%= n %>" <%= myStars === n ? 'checked' : '' %> required><label for="rate<%= n %>" title="<%= n %> star<%= n === 1 ? '' : 's' %>"><%- icon('star') %><span class="sr-only"><%= n %> star<%= n === 1 ? '' : 's' %></span></label><% }) %>
+            </div>
+          </fieldset>
+          <div class="field"><label class="label" for="body">Comment <span class="muted">(optional)</span></label>
+            <textarea id="body" name="body" rows="3" maxlength="<%= C.RULES.reviewMaxChars %>" placeholder="What was it like dealing with them? Stick to what happened."><%= mine ? mine.body : '' %></textarea></div>
+          <div class="row-actions"><button class="btn btn-primary" type="submit"><%= mine ? 'Update review' : 'Post review' %></button></div>
+        </form>
+        <% if (mine) { %><form method="post" action="/u/<%= p.uid %>/review/delete" data-confirm="Delete your review?" style="margin-top:8px"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Delete my review</button></form><% } %>
+        <p class="small muted" style="margin-bottom:0">Reviews are public and show your name. Be fair: the team removes abusive or fake reviews.</p>
+      <% } %>
+    </section>
+  <% } %>
+
+  <section class="section" aria-labelledby="list-h">
+    <h2 id="list-h">Reviews <span class="muted">(<%= summary.count %>)</span></h2>
+    <% if (!reviewList.length) { %><p class="muted">Nothing here yet.</p><% } %>
+    <ul class="reviews">
+      <% reviewList.forEach(function (r) { %>
+        <li class="card card-pad review">
+          <div class="row-between">
+            <div><%- include('partials/stars', { value: r.rating }) %> <a href="/u/<%= r.author.uid %>"><strong><%= r.author.name %></strong></a></div>
+            <span class="muted small"><%= formatDate(r.createdAt) %></span>
+          </div>
+          <% if (r.body) { %><p style="white-space:pre-line;margin:8px 0 0"><%= r.body %></p><% } %>
+          <% if (!user || r.authorId !== user.id) { %><p class="small" style="margin:8px 0 0"><a href="/reviews/<%= r.uid %>/report" rel="nofollow">Report this review</a></p><% } else { %><p class="small muted" style="margin:8px 0 0">Your review</p><% } %>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (morePages || page > 1) { %><nav class="pager"><% if (page > 1) { %><a class="btn btn-ghost" href="?page=<%= page - 1 %>#reviews">Newer reviews</a><% } %><% if (morePages) { %><a class="btn btn-ghost" href="?page=<%= page + 1 %>#reviews">Older reviews</a><% } %></nav><% } %>
+  </section>
+
+  <% if (lodges.length) { %>
+    <section class="section"><h2>Lodges</h2><div class="grid"><% lodges.forEach(function (l) { %><%- include('partials/card', { l: l, savedSet: savedSet }) %><% }) %></div></section>
+  <% } %>
+  <% if (items.length) { %>
+    <section class="section"><h2>Items for sale</h2><div class="grid"><% items.forEach(function (i) { %><%- include('partials/item-card', { i: i, savedItems: savedItems }) %><% }) %></div></section>
+  <% } %>
+  <% if (active && !lodges.length && !items.length) { %><p class="muted">Nothing listed right now.</p><% } %>
+
+  <p class="small muted" style="margin-top:24px">
+    <% if (isSelf) { %>This is how others see you. <a href="/account">Edit your account</a>.
+    <% } else if (active) { %><a href="/u/<%= p.uid %>/report" rel="nofollow"><%- icon('flag') %> Report this person</a><% } %>
+    <% if (user && user.isAdmin) { %> &middot; <a href="/admin/users/<%= p.uid %>">Admin view</a><% } %>
+  </p>
+</div>
+<%- include('partials/bottom') %>

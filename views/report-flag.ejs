@@ -1,0 +1,16 @@
+<%- include('partials/top') %>
+<div class="container" style="max-width:560px">
+  <a class="small" href="<%= back %>">&larr; Back</a>
+  <h1 style="margin-top:8px"><%= heading %></h1>
+  <p class="muted"><strong><%= subject %></strong></p>
+  <p class="small muted"><%= hint %></p>
+  <form method="post" action="<%= action %>" class="card card-pad">
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <fieldset class="field"><legend class="label">What is wrong?</legend>
+      <% reasons.forEach(function (r, n) { %><label class="check" style="display:flex;margin:6px 0"><input type="radio" name="reason" value="<%= r.value %>" <%= n === 0 ? 'required' : '' %>> <%= r.label %></label><% }) %>
+    </fieldset>
+    <div class="field"><label class="label" for="note">Details <span class="muted">(optional)</span></label><textarea id="note" name="note" rows="4" maxlength="500" placeholder="What happened? Include dates and what was said or asked for."></textarea></div>
+    <button class="btn btn-primary" type="submit">Send report</button>
+  </form>
+</div>
+<%- include('partials/bottom') %>

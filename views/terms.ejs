@@ -1,0 +1,30 @@
+<%- include('partials/top') %>
+<div class="container narrow" style="max-width:720px">
+  <h1>Terms of use</h1>
+  <p class="muted">Last updated October 2026. Draft: have it reviewed by a Nigerian lawyer before launch.</p>
+  <h2>What <%= site.name %> is</h2>
+  <p><%= site.name %> helps people find accommodation and contact the people who list it. <%= site.name %> is not a party to any tenancy, does not collect rent, and does not guarantee any listing.</p>
+  <h2>If you list a property</h2>
+  <ul>
+    <li>Only list properties you are allowed to let, with accurate photos, prices and availability.</li>
+    <li>Disclose every charge a tenant must pay, and who receives it. A listing is not approved until all charges are disclosed.</li>
+    <li>Do not take money for a place you cannot show, or ask a tenant to pay before they can inspect.</li>
+    <li>Confirm availability when asked and mark rented properties promptly.</li>
+    <li>We may reject, hide or remove listings, and suspend accounts, that break these rules or mislead tenants.</li>
+  </ul>
+  <h2>If you are looking for a place</h2>
+  <p>Inspect before you pay, check the full cost, and read our <a href="/help#safety">safety tips</a>. Verification badges show what the <%= site.name %> team checked, not a guarantee.</p>
+  <h2>If you sell something in the market</h2>
+  <p>Only sell things you own and are allowed to sell. Do not post anything illegal, stolen, counterfeit, unsafe, or that breaks school rules. Photos and descriptions must be honest. Items that break these rules are removed and the account can be banned. An item is shown for 60 days and then leaves the market unless the seller renews it. <%= site.name %> only connects buyers and sellers: payment and the handover happen between you, so inspect before you pay.</p>
+  <h2>Reviews and ratings</h2>
+  <p>Signed-in people can rate and review other people once each, and can edit or delete their own review. Reviews are the opinion of the reviewer and are public, with the reviewer's name. Keep them fair and about what happened. We remove reviews that are abusive, fake, or about the wrong person, and reviews written by banned accounts stop counting.</p>
+  <h2>Bans</h2>
+  <p>We may ban an account for fraud, fake lodges or items, harassment, or pretending to be someone else. A banned account cannot sign in, its lodges and items are taken down, and its public profile shows that it was banned. If you think a ban is a mistake, contact us.</p>
+  <h2>Ads</h2>
+  <p>Some cards in the lodge and market lists are marked as ads. They are placed by <%= site.name %> and are not a recommendation of the lodge or item next to them.</p>
+  <h2>Fees</h2>
+  <p>Listing on <%= site.name %> is free at launch. Any future <%= site.name %> fee will be announced in advance and will never be mixed into rent or agent fees.</p>
+  <h2>Contact</h2>
+  <p><a href="mailto:<%= cfg.supportEmail %>"><%= cfg.supportEmail %></a></p>
+</div>
+<%- include('partials/bottom') %>

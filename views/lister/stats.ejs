@@ -1,0 +1,46 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:860px">
+  <div class="row-between" style="margin-bottom:12px">
+    <div><p class="muted small" style="margin:0">Welcome back</p><h1 style="margin:0"><%= profile.displayName %></h1></div>
+    <% const v = profile.verification; %>
+    <a class="tag <%= v.phoneVerified && v.idChecked ? 'tag-ok' : 'tag-warn' %>" href="/lister/profile" style="text-decoration:none"><%= v.phoneVerified && v.idChecked ? 'Verified' : 'Verification pending' %></a>
+  </div>
+  <% if (!user.emailVerifiedAt) { %><div class="alert alert-warn">Verify your email to submit lodges. <a href="/account">Resend the link</a></div><% } %>
+
+  <div class="tiles">
+    <div class="card tile"><strong><%= liveCount %></strong><span>Lodges live</span></div>
+    <div class="card tile"><strong><%= totals.views %></strong><span>Total views</span></div>
+    <div class="card tile"><strong><%= totals.clicks %></strong><span>WhatsApp clicks</span></div>
+    <div class="card tile"><strong><%= totals.saves %></strong><span>Times saved</span></div>
+  </div>
+
+  <% if (!listings.length) { %>
+    <div class="empty"><%- icon('building') %><h2>No lodges listed yet</h2><p class="muted">Add your first lodge and it will show up here with its own views and WhatsApp clicks.</p><a class="btn btn-primary" href="/lister/lodges/new">Add your first lodge</a></div>
+  <% } else { %>
+    <section class="card card-pad" style="margin-bottom:16px">
+      <h2>Views in the last 7 days</h2>
+      <div class="bars" role="img" aria-label="Daily views for the last 7 days">
+        <% days.forEach(function (d) { %><div class="bar" title="<%= d.views %> views, <%= d.clicks %> clicks"><i style="height:<%= Math.round(d.views / maxDay * 80) %>%"></i><span><%= d.label %></span></div><% }) %>
+      </div>
+    </section>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Lodge</th><th>Status</th><th>Views</th><th>WhatsApp clicks</th><th>Saved</th><th>Said agent replied</th></tr></thead>
+        <tbody>
+          <% listings.forEach(function (l) { const fb = feedback[String(l._id)]; %>
+            <tr>
+              <td class="wrap"><a href="/lister/lodges/<%= l._id %>/edit"><%= l.title %></a></td>
+              <td><%= statusLabel(l.status) %></td>
+              <td><%= l.counters.views %></td>
+              <td><%= l.counters.contactClicks %></td>
+              <td><%= l.counters.saves %></td>
+              <td><%= fb ? fb.replied + ' of ' + fb.total : 'No answers yet' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted small" style="margin-top:10px">A WhatsApp click means someone tapped the button. We cannot see whether they sent a message or you replied.</p>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

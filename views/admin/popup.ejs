@@ -1,0 +1,46 @@
+<%- include('../partials/top') %>
+<%
+  const e = errors || {};
+  const rows = form.items.length ? form.items : [];
+  const blanks = Math.max(0, 3 - rows.length);
+  const all = rows.concat(Array.from({ length: blanks }, function () { return { icon: 'check', title: '', text: '' }; }));
+%>
+<div class="container" style="max-width:760px">
+  <div class="page-head"><h1>Welcome popup</h1><button type="button" class="btn btn-ghost" data-open-welcome data-preview><%- icon('eye') %>Preview saved popup</button></div>
+  <p class="muted">A short introduction shown once to each visitor: on a phone it slides up from the bottom. Use it to tell people what the site offers. Write <code>{site}</code> where the site name should appear.</p>
+  <% if (Object.keys(e).length) { %><div class="alert alert-error" role="alert"><ul style="margin:0;padding-left:18px"><% Object.keys(e).forEach(function (k) { %><li><%= e[k] %></li><% }) %></ul></div><% } %>
+  <form method="post" action="/admin/popup" id="popup-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <section class="card form-card">
+      <label class="switch"><span><strong>Show the popup</strong><br><span class="muted small">Visitors see it the first time they open the site. Turn off to hide it everywhere.</span></span><input type="checkbox" name="enabled" <%= form.enabled ? 'checked' : '' %>></label>
+      <div class="field"><label class="label" for="title">Title</label><input id="title" name="title" type="text" maxlength="80" value="<%= form.title %>" class="<%= e.title ? 'invalid' : '' %>"></div>
+      <div class="field"><label class="label" for="intro">Short introduction</label><textarea id="intro" name="intro" rows="3" maxlength="400"><%= form.intro %></textarea></div>
+      <div class="field"><label class="label" for="buttonLabel">Button text</label><input id="buttonLabel" name="buttonLabel" type="text" maxlength="30" value="<%= form.buttonLabel %>"></div>
+    </section>
+
+    <section class="card form-card">
+      <h2>Features</h2>
+      <p class="hint" style="margin-top:-6px">One row for each thing the site offers. Empty rows are ignored. Up to <%= maxItems %>.</p>
+      <div id="pop-rows">
+        <% all.forEach(function (it) { %>
+          <div class="pop-row">
+            <div class="grid-2">
+              <div class="field"><label class="label">Icon</label><select name="itemIcon" aria-label="Icon"><% icons.forEach(function (ic) { %><option value="<%= ic %>" <%= it.icon === ic ? 'selected' : '' %>><%= ic.charAt(0).toUpperCase() + ic.slice(1) %></option><% }) %></select></div>
+              <div class="field"><label class="label">Title</label><input name="itemTitle" type="text" maxlength="60" value="<%= it.title %>" aria-label="Feature title"></div>
+            </div>
+            <div class="field"><label class="label">Description</label><textarea name="itemText" rows="2" maxlength="220" aria-label="Feature description"><%= it.text %></textarea></div>
+            <div class="row-actions" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost btn-sm" data-row-up aria-label="Move up">Move up</button><button type="button" class="btn btn-ghost btn-sm" data-row-down aria-label="Move down">Move down</button><button type="button" class="btn btn-ghost btn-sm" data-row-remove>Remove</button></div>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" class="btn btn-ghost" id="pop-add"><%- icon('plus') %>Add a feature</button>
+    </section>
+
+    <section class="card form-card">
+      <label class="switch"><span><strong>Show it again to everyone who has already seen it</strong><br><span class="muted small">Tick this when you add something new. Leave it off for small fixes such as a typo.</span></span><input type="checkbox" name="reshow"></label>
+    </section>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Save popup</button></div>
+  </form>
+  <form method="post" action="/admin/popup/reset" data-confirm="Replace the popup with the standard version? Your wording will be lost." style="margin-top:16px"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Reset to the standard wording</button></form>
+</div>
+<%- include('../partials/bottom', { scripts: welcomeVersion ? ['popup-form.js'] : ['welcome.js', 'popup-form.js'] }) %>

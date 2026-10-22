@@ -1,0 +1,142 @@
+<%- include('../partials/top') %>
+<%
+  const e = errors || {};
+  const inReview = ['pending', 'live', 'needs_reconfirm', 'hidden', 'rented'].indexOf(state.status) > -1;
+  const draftOk = !locals.adminMode && (!listing || ['draft', 'rejected'].indexOf(state.status) > -1);
+  const bad = function (k) { return e[k] ? 'invalid' : ''; };
+%>
+<div class="container" style="max-width:780px">
+  <a class="small" href="<%= locals.backUrl || '/lister/lodges' %>">&larr; <%= locals.adminMode ? 'Back to the lodge' : 'Your lodges' %></a>
+  <h1 style="margin-top:8px"><%= listing ? 'Edit lodge' : 'Add a lodge' %></h1>
+  <% if (locals.adminMode) { %><div class="alert alert-info">You are editing this lodge as an administrator. Changes apply straight away and its status stays <strong><%= statusLabel(state.status) %></strong>.</div><% } %>
+  <% if (false) { %><div class="alert alert-warn">Photo and video uploads are not set up on this server yet, so lodges cannot be submitted. Add the Cloudinary settings to <code>.env</code> and restart. See the README.</div><% } %>
+  <% if (listing && inReview && !locals.adminMode) { %><div class="alert alert-warn">Saving changes sends this lodge for a quick re-review. It is hidden from search until it is approved again.</div><% } %>
+  <% if (listing && listing.rejectionReason && state.status === 'rejected') { %><div class="alert alert-error"><strong>Needs changes:</strong> <%= listing.rejectionReason %></div><% } %>
+  <% if (Object.keys(e).length) { %><div class="alert alert-error" role="alert"><strong>Please fix these:</strong><ul style="margin:6px 0 0;padding-left:18px"><% Object.keys(e).forEach(function (k) { %><li><%= e[k] %></li><% }) %></ul></div><% } %>
+
+  <form id="lodge-form" method="post" action="<%= locals.formAction || (listing ? '/lister/lodges/' + listing._id : '/lister/lodges') %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <input type="hidden" name="action" id="action" value="<%= draftOk ? 'draft' : 'submit' %>">
+    <input type="hidden" name="unitsJson" id="unitsJson">
+    <input type="hidden" name="feesJson" id="feesJson">
+    <input type="hidden" name="mediaJson" id="mediaJson">
+
+    <section class="card form-card">
+      <h2>The place</h2>
+      <div class="field"><label class="label" for="title">Title</label><input id="title" name="title" type="text" maxlength="90" value="<%= state.title %>" placeholder="e.g. Clean self-contain near Miracle Junction" class="<%= bad('title') %>"></div>
+      <div class="field"><label class="label" for="propertyType">Type of property</label>
+          <select id="propertyType" name="propertyType" class="<%= bad('propertyType') %>"><option value="">Choose</option><% C.PROPERTY_TYPES.forEach(function (t) { %><option value="<%= t.value %>" <%= state.propertyType === t.value ? 'selected' : '' %>><%= t.label %></option><% }) %></select></div>
+    </section>
+
+    <section class="card form-card" data-places>
+      <h2>Where is it?</h2>
+      <%- include('../partials/places-fields', { values: { state: state.state, campus: state.campus }, errors: e }) %>
+      <div>
+        <div class="field"><label class="label" for="area">Area</label>
+          <select id="area" name="area" class="<%= bad('area') %>"><option value="">Choose</option><% areas.forEach(function (a) { %><option value="<%= a._id %>" data-state="<%= a.stateId %>" data-j="<%= JSON.stringify(a.junctions || []) %>" <%= String(state.area) === String(a._id) ? 'selected' : '' %>><%= a.name %></option><% }) %></select></div>
+      </div>
+      <div class="field"><label class="label" for="junction">Nearest junction or landmark</label><input id="junction" name="junction" type="text" list="junction-list" maxlength="60" value="<%= state.junction %>" placeholder="e.g. Miracle Junction" autocomplete="off"><datalist id="junction-list"></datalist></div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="minutesWalk">Minutes on foot to campus</label><input id="minutesWalk" name="minutesWalk" type="number" inputmode="numeric" min="0" max="180" value="<%= state.minutesWalk %>" placeholder="Optional"></div>
+        <div class="field"><label class="label" for="minutesKeke">Minutes by keke</label><input id="minutesKeke" name="minutesKeke" type="number" inputmode="numeric" min="0" max="180" value="<%= state.minutesKeke %>" placeholder="Optional"></div>
+      </div>
+    </section>
+
+    <section class="card form-card">
+      <h2>Rooms and spaces</h2>
+      <p class="hint" style="margin-top:-6px">One property can have several rooms or bed spaces. Add each one with its own rent.</p>
+      <div id="units"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="add-unit"><%- icon('plus') %>Add another room or space</button>
+    </section>
+
+    <section class="card form-card">
+      <h2>Charges besides rent</h2>
+      <p class="hint" style="margin-top:-6px">Optional but helpful: break the initial payment down (agent fee, agreement fee, caution deposit and so on). Any part you do not itemise shows as "Other first-time charges". Percentages are worked out from each room's rent.</p>
+      <div id="fees"></div>
+      <p class="hint" id="no-fees">No extra charges added. If tenants pay only rent, leave this empty.</p>
+      <button type="button" class="btn btn-ghost btn-sm" id="add-fee"><%- icon('plus') %>Add a charge</button>
+
+      <div style="margin-top:20px">
+        <div class="field" hidden><label class="label" for="preview-unit">Preview for</label><select id="preview-unit"></select></div>
+        <dl id="preview" class="cost" style="margin:0" aria-live="polite"></dl>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label class="check"><input type="checkbox" name="chargesDisclosed" <%= state.chargesDisclosed ? 'checked' : '' %>><span>I have listed every charge a tenant must pay before or when moving in.</span></label>
+        <% if (e.chargesDisclosed) { %><div class="error-text"><%= e.chargesDisclosed %></div><% } %>
+        <% if (e.fees) { %><div class="error-text"><%= e.fees %></div><% } %>
+      </div>
+    </section>
+
+    <section class="card form-card">
+      <h2>Photos and video</h2>
+      <p class="hint" style="margin-top:-6px">Add at least <%= C.RULES.minPhotos %> clear photos. The first photo is the cover. A short walkthrough video helps. Photos are shrunk on your phone to save data.</p>
+      <div id="uploads" class="uploads" aria-live="polite"></div>
+      <p class="small muted" id="photo-count"></p>
+      <div class="grid-2">
+        <label class="dropzone"><input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple><%- icon('upload') %><strong>Add photos</strong></label>
+        <label class="dropzone"><input type="file" id="video-input" accept="video/mp4,video/quicktime"><%- icon('upload') %><strong>Add video</strong><span class="hint">MP4 or MOV, up to <%= C.RULES.maxVideoMb %> MB</span></label>
+      </div>
+      <% if (e.media) { %><div class="error-text"><%= e.media %></div><% } %>
+    </section>
+
+    <section class="card form-card">
+      <h2>Description and facilities</h2>
+      <div class="field"><label class="label" for="description">What makes this place worth a look?</label><textarea id="description" name="description" maxlength="1500" class="<%= bad('description') %>" placeholder="Describe the room, the compound, the neighbourhood and house rules."><%= state.description %></textarea></div>
+      <fieldset class="field"><legend class="label">What the property has</legend>
+        <div class="chips"><% C.AMENITIES.forEach(function (a) { %><label class="chip-toggle"><input type="checkbox" name="amenities" value="<%= a.value %>" <%= (state.amenities || []).indexOf(a.value) > -1 ? 'checked' : '' %>><span><%= a.label %></span></label><% }) %></div>
+      </fieldset>
+    </section>
+
+    <div class="sticky-actions"><div class="wrap">
+      <% if (draftOk) { %><button type="submit" class="btn btn-ghost" data-action="draft">Save draft</button><% } %>
+      <button type="submit" class="btn btn-primary" data-action="submit"><%= locals.adminMode ? 'Save changes' : inReview ? 'Save and send for review' : 'Submit for review' %></button>
+    </div></div>
+  </form>
+</div>
+
+<template id="tpl-unit">
+  <div class="edit-item">
+    <header><strong class="item-no"></strong><button type="button" class="btn btn-ghost btn-sm" data-remove>Remove</button></header>
+    <label class="field"><span class="label">Name</span><input type="text" data-f="label" maxlength="40" placeholder="e.g. Self-contain, Room A, Bed space"></label>
+    <label class="field"><span class="label">What is being let?</span>
+      <select data-f="kind"><% C.UNIT_KINDS.forEach(function (k) { %><option value="<%= k.value %>"><%= k.label %></option><% }) %></select></label>
+    <div class="grid-2" data-kinds="shared_room">
+      <label class="field"><span class="label">Total spaces</span><input type="number" inputmode="numeric" min="1" max="20" data-f="spacesTotal"></label>
+      <label class="field"><span class="label">Spaces still free</span><input type="number" inputmode="numeric" min="0" max="20" data-f="spacesAvailable"></label>
+    </div>
+    <div class="grid-2">
+      <label class="field"><span class="label">Rent (&#8358;)<span class="muted"> the normal price, also paid on renewal</span></span><input type="text" inputmode="numeric" data-f="rent" placeholder="e.g. 300000"></label>
+      <label class="field"><span class="label">Paid</span>
+        <select data-f="period"><% C.PERIODS.forEach(function (p) { %><option value="<%= p.value %>"><%= p.label %></option><% }) %></select></label>
+    </div>
+    <label class="field"><span class="label">Initial payment (&#8358;)<span class="muted"> the total for the first time</span></span><input type="text" inputmode="numeric" data-f="initialPayment" placeholder="e.g. 530000"><span class="hint">Everything a new tenant pays in total when moving in: rent plus all other charges. Leave empty and we will work it out from the charges below. On renewal they pay only the rent above.</span></label>
+    <label class="field" data-kinds="private_room shared_room"><span class="label">Who can take it?</span>
+      <select data-f="genderPreference"><% C.GENDERS.forEach(function (g) { %><option value="<%= g.value %>"><%= g.label %></option><% }) %></select></label>
+    <fieldset class="field" data-kinds="private_room shared_room"><legend class="label">Shared with other tenants</legend>
+      <div class="chips"><% C.SHARED_FACILITIES.forEach(function (f) { %><label class="chip-toggle"><input type="checkbox" data-fac value="<%= f.value %>"><span><%= f.label %></span></label><% }) %></div></fieldset>
+    <label class="field"><span class="label">Notes (optional)</span><input type="text" data-f="notes" maxlength="200" placeholder="e.g. Fully furnished, close to the road"></label>
+  </div>
+</template>
+
+<template id="tpl-fee">
+  <div class="edit-item">
+    <header><strong>Charge</strong><button type="button" class="btn btn-ghost btn-sm" data-remove>Remove</button></header>
+    <label class="field"><span class="label">What is it for?</span>
+      <select data-f="label"><% C.FEE_LABELS.forEach(function (f) { %><option value="<%= f.value %>"><%= f.label %></option><% }) %></select></label>
+    <label class="field" data-other hidden><span class="label">Name of the charge</span><input type="text" data-f="customLabel" maxlength="40"></label>
+    <div class="grid-2">
+      <label class="field"><span class="label">How is it worked out?</span>
+        <select data-f="kind"><option value="fixed">Fixed amount</option><option value="percent">Percent of rent</option></select></label>
+      <label class="field"><span class="label">Amount (<span data-sym>&#8358;</span>)</span><input type="text" inputmode="decimal" data-f="value" placeholder="e.g. 10"></label>
+    </div>
+    <div class="grid-2">
+      <label class="field"><span class="label">Paid to</span>
+        <select data-f="payee"><option value="agent">The agent</option><option value="landlord">The landlord</option></select></label>
+      <label class="check" style="align-self:center"><input type="checkbox" data-f="refundable"><span>Refundable</span></label>
+    </div>
+    <label class="field"><span class="label">Note (optional)</span><input type="text" data-f="note" maxlength="120" placeholder="e.g. Returned when you leave"></label>
+  </div>
+</template>
+
+<script type="application/json" id="form-data"><%- JSON.stringify({ state: state, limits: { minPhotos: C.RULES.minPhotos, maxPhotos: C.RULES.maxPhotos, maxVideoMb: C.RULES.maxVideoMb } }).replace(/</g, '\\u003c') %></script>
+<%- include('../partials/bottom', { scripts: ['places.js', 'uploader.js', 'form.js'] }) %>

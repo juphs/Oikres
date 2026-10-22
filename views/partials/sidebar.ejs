@@ -1,0 +1,34 @@
+<%
+  const isLister = !!(user && user.roles.indexOf('lister') > -1);
+  let groups;
+  if (area === 'admin') {
+    groups = [{ label: 'Admin', items: [['/admin', 'dashboard', 'Dashboard', 'grid'], ['/admin/listings', 'listings', 'Listings', 'building'], ['/admin/users', 'users', 'Users', 'users'], ['/admin/listers', 'listers', 'Listers', 'shield'], ['/admin/market', 'market', 'Market', 'bag'], ['/admin/ads', 'ads', 'Ads', 'megaphone'], ['/admin/reports', 'reports', 'Reports', 'flag']] },
+      { label: 'System', items: [['/admin/reference', 'reference', 'Places', 'pin'], ['/admin/broadcast', 'broadcast', 'Broadcast', 'megaphone'], ['/admin/settings', 'settings', 'Site settings', 'palette'], ['/admin/audit', 'audit', 'Audit log', 'file']] },
+      { label: '', items: [['/', 'site', 'View site', 'home']] }];
+  } else if (area === 'lister') {
+    groups = [{ label: 'Your lodges', items: [['/lister', 'stats', 'Stats', 'chart'], ['/lister/lodges', 'lodges', 'Lodges', 'building'], ['/lister/profile', 'profile', 'Profile', 'user'], ['/lister/lodges/new', 'new', 'Add a lodge', 'plus']] },
+      { label: '', items: [['/', 'site', 'Browse lodges', 'home']] }];
+  } else {
+    groups = [{ label: '', items: [['/', 'browse', 'Browse lodges', 'home'], ['/market', 'market', 'Market', 'bag'], ['/saved', 'saved', 'Saved', 'heart'], ['/help', 'help', 'Help and support', 'help']] },
+      { label: 'Your account', items: [isLister ? ['/lister', 'lister', 'Your lodges', 'building'] : ['/account/become-lister', 'become', 'List a lodge', 'plus']]
+        .concat(user ? [['/market/mine', 'myitems', 'Your items', 'bag'], ['/u/' + user.uid, 'public', 'Your public profile', 'star'], ['/account', 'profile', 'Account', 'user'], ['/account/notifications', 'notifications', 'Notifications', 'bell']] : [])
+        .concat(user && user.isAdmin ? [['/admin', 'admin', 'Admin', 'settings']] : []) }];
+  }
+%>
+<aside class="sidebar" aria-label="Main">
+  <%- include('logo') %>
+  <% groups.forEach(function (g) { %>
+    <% if (g.label) { %><div class="side-label"><%= g.label %></div><% } %>
+    <% g.items.forEach(function (it) { %>
+      <a class="side-link" href="<%= it[0] %>" <%- nav === it[1] ? 'aria-current="page"' : '' %>><%- icon(it[3]) %><%= it[2] %><% if (it[1] === 'notifications' && unread) { %><span class="side-badge"><%= unread %></span><% } %></a>
+    <% }) %>
+  <% }) %>
+  <div class="side-spacer"></div>
+  <% if (user) { %>
+    <div class="side-user"><div class="avatar" aria-hidden="true"><%= user.name.charAt(0).toUpperCase() %></div><div class="grow"><strong><%= user.name %></strong><span><%= user.email %></span></div></div>
+    <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="side-link" type="submit" style="width:100%;background:none;cursor:pointer;font:inherit"><%- icon('logout') %>Log out</button></form>
+  <% } else { %>
+    <a class="btn btn-primary btn-block" href="/login?returnTo=<%= encodeURIComponent(path === '/login' || path === '/register' ? '/' : path) %>">Sign in</a>
+    <a class="btn btn-ghost btn-block" href="/register">Create account</a>
+  <% } %>
+</aside>

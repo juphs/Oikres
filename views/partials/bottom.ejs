@@ -1,0 +1,36 @@
+</main>
+<footer class="footer <%= hideNav ? 'no-nav' : '' %>">
+  <a href="/help">Help</a><% if (welcomeVersion) { %><a href="/help#tour" data-open-welcome>Take the tour</a><% } %><a href="/privacy">Privacy</a><a href="/terms">Terms</a><% if (supportLink()) { %><a href="<%= supportLink() %>" target="_blank" rel="noopener">Chat with us</a><% } %>
+  <div>&copy; <%= new Date().getFullYear() %> <%= site.name %> &middot; <%= site.domain %></div>
+  <% if (site.footerNote) { %><div><%= site.footerNote %></div><% } %>
+  <div class="credit">Site created by <a href="<%= cfg.credit.url %>" target="_blank" rel="noopener"><%= cfg.credit.name %></a></div>
+</footer>
+</div>
+</div>
+<% if (!hideNav && area !== 'admin') { %>
+<nav class="bottomnav" aria-label="Primary">
+  <% if (area === 'lister') { %>
+    <a href="/lister" <%- nav === 'stats' ? 'aria-current="page"' : '' %>><%- icon('chart') %>Stats</a>
+    <a href="/lister/lodges" <%- nav === 'lodges' ? 'aria-current="page"' : '' %>><%- icon('building') %>Lodges</a>
+    <a href="/lister/profile" <%- nav === 'profile' ? 'aria-current="page"' : '' %>><%- icon('user') %>Profile</a>
+  <% } else { %>
+    <a href="/" <%- nav === 'browse' ? 'aria-current="page"' : '' %>><%- icon('home') %>Browse</a>
+    <a href="/market" <%- nav === 'market' ? 'aria-current="page"' : '' %>><%- icon('bag') %>Market</a>
+    <a href="/saved" <%- nav === 'saved' ? 'aria-current="page"' : '' %>><%- icon('heart') %>Saved</a>
+    <a href="<%= user ? '/account' : '/login?returnTo=%2Faccount' %>" <%- nav === 'profile' ? 'aria-current="page"' : '' %>><%- icon('user') %>Profile</a>
+  <% } %>
+</nav>
+<% } %>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="install" class="install card" hidden>
+  <p id="install-text">Install <%= site.name %> for one-tap access, even on a weak connection.</p>
+  <button type="button" class="btn btn-primary btn-sm" id="install-yes">Install</button>
+  <button type="button" class="icon-btn" id="install-no" aria-label="Dismiss"><%- icon('x') %></button>
+</div>
+<script src="/js/app.js?v=<%= cfg.assetVersion %>" defer></script>
+<script src="/js/select.js?v=<%= cfg.assetVersion %>" defer></script>
+<script src="/js/gallery.js?v=<%= cfg.assetVersion %>" defer></script>
+<% if (welcomeVersion) { %><script src="/js/welcome.js?v=<%= cfg.assetVersion %>" defer></script><% } %>
+<% (locals.scripts || []).forEach(function (s) { %><script src="/js/<%= s %>?v=<%= cfg.assetVersion %>" defer></script><% }) %>
+</body>
+</html>

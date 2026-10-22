@@ -1,0 +1,5 @@
+<a class="logo" href="/" aria-label="<%= site.name %> home">
+  <% if (site.logoUrl) { %>
+    <picture><% if (site.logoDarkUrl) { %><source media="(prefers-color-scheme: dark)" srcset="<%= site.logoDarkUrl %>"><% } %><img class="logo-img" src="<%= site.logoUrl %>" alt="<%= site.name %>"></picture>
+  <% } else { %><span class="logo-mark"><%- icon('home') %></span><span class="logo-name"><%= site.name %></span><% } %>
+</a>

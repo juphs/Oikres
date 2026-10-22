@@ -1,0 +1,12 @@
+<%# Inline "Ban account" control. Needs: uid (the person), next (where to return to), label (button text, optional). %>
+<details class="inline-ban">
+  <summary class="btn btn-danger btn-sm"><%- icon('ban') %><%= locals.label || 'Ban account' %></summary>
+  <form method="post" action="/admin/users/<%= uid %>/ban" class="inline-ban-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>"><input type="hidden" name="next" value="<%= next %>">
+    <p class="small muted">The person is signed out at once and cannot sign in again. Their lodges and items are hidden and the reviews they wrote stop counting. You can lift the ban later.</p>
+    <label class="field" style="display:block"><span class="label">Reason</span>
+      <select name="reason" required aria-label="Reason for the ban"><% C.BAN_REASONS.forEach(function (r) { %><option value="<%= r.value %>"><%= r.label %></option><% }) %></select></label>
+    <label class="field" style="display:block"><span class="label">Note (only administrators see it)</span><input type="text" name="note" maxlength="300" placeholder="What happened?"></label>
+    <button class="btn btn-danger btn-sm" type="submit">Ban this account</button>
+  </form>
+</details>

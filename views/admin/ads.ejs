@@ -1,0 +1,27 @@
+<%- include('../partials/top') %>
+<% const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; %>
+<div class="container" style="max-width:860px">
+  <div class="row-between"><h1>Ads</h1><a class="btn btn-primary" href="/admin/ads/new"><%- icon('plus') %>New ad</a></div>
+  <p class="muted">Ads appear as cards inside the lodge list, the market list, or both, with an "Ad" label. Use them for promos, partners, announcements or your own services.</p>
+  <% if (!ads.length) { %><div class="empty"><%- icon('megaphone') %><h2>No ads yet</h2><p class="muted">Create one and it shows up in the lists straight away.</p><a class="btn btn-primary" href="/admin/ads/new">Create an ad</a></div><% } %>
+  <div class="stack">
+    <% ads.forEach(function (a) { const now = Date.now(); const scheduled = a.startsAt && a.startsAt > now; const ended = a.endsAt && a.endsAt < now; %>
+      <article class="card lodge-row">
+        <% if (a.imageUrl) { %><img src="<%= a.thumbUrl || a.imageUrl %>" width="84" height="64" alt="" loading="lazy"><% } else if (a.videoUrl) { %><video src="<%= a.videoUrl %>" width="84" height="64" muted playsinline preload="metadata" style="object-fit:cover;border-radius:10px;background:#000" aria-hidden="true"></video><% } else { %><div class="thumb-ph"></div><% } %>
+        <div class="grow">
+          <h3><%= a.title %></h3>
+          <p class="muted small" style="margin:0 0 6px">
+            <span class="tag <%= a.isActive && !scheduled && !ended ? 'tag-ok' : '' %>"><%= !a.isActive ? 'Off' : scheduled ? 'Scheduled' : ended ? 'Ended' : 'Running' %></span>
+            &middot; <%= PLACEMENTS.filter(function (p) { return p.value === a.placement; })[0].label %><%= a.campusName ? ' · ' + a.campusName : a.stateName ? ' · ' + a.stateName : '' %>
+            &middot; <%= a.impressions %> views, <%= a.clicks %> click<%= a.clicks === 1 ? '' : 's' %><%= a.impressions >= 20 ? ' (' + (a.clicks / a.impressions * 100).toFixed(1) + '% clicked)' : '' %><%= a.videoUrl ? ' · video' : '' %></p>
+          <div class="actions">
+            <a class="btn btn-ghost btn-sm" href="/admin/ads/<%= a._id %>/edit"><%- icon('edit') %>Edit</a>
+            <form method="post" action="/admin/ads/<%= a._id %>/toggle"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%= a.isActive ? 'Turn off' : 'Turn on' %></button></form>
+            <form method="post" action="/admin/ads/<%= a._id %>/delete" data-confirm="Delete this ad?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete</button></form>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

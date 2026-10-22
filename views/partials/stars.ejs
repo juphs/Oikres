@@ -1,0 +1,6 @@
+<%# Read-only stars. value = 0 to 5 (decimals fill part of a star). size: 'sm' (default) or 'lg'. %>
+<% const v = Math.max(0, Math.min(5, Number(value) || 0)); const five = [1, 2, 3, 4, 5]; %>
+<span class="stars <%= locals.size === 'lg' ? 'stars-lg' : '' %>" style="--v:<%= v %>" role="img" aria-label="<%= v.toFixed(1) %> out of 5 stars">
+  <span class="stars-base" aria-hidden="true"><% five.forEach(function () { %><%- icon('star') %><% }) %></span>
+  <span class="stars-fill" aria-hidden="true"><% five.forEach(function () { %><%- icon('star') %><% }) %></span>
+</span>

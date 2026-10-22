@@ -1,0 +1,65 @@
+<%- include('../partials/top') %>
+<% const isLister = user.roles.indexOf('lister') > -1; %>
+<div class="container narrow" style="max-width:640px">
+  <h1 class="sr-only">Your account</h1>
+  <div class="card card-pad row-between" style="margin-bottom:16px">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="avatar" aria-hidden="true"><%= user.name.charAt(0).toUpperCase() %></div>
+      <div><strong><%= user.name %></strong><div class="muted small"><%= user.email %></div></div>
+    </div>
+    <% if (user.emailVerifiedAt) { %><span class="tag tag-ok"><%- icon('check') %>Email verified</span><% } %>
+  </div>
+
+  <% if (!user.emailVerifiedAt) { %>
+    <div class="alert alert-warn">
+      Verify your email to list lodges. We sent a link to <strong><%= user.email %></strong>.
+      <form method="post" action="/resend-verification" style="margin-top:8px"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Send the link again</button></form>
+    </div>
+  <% } %>
+
+  <div class="tiles"><a class="card tile" href="/saved" style="text-decoration:none;color:inherit"><strong><%= saved %></strong><span>Saved lodges</span></a><a class="card tile" href="/saved?tab=items" style="text-decoration:none;color:inherit"><strong><%= savedItemCount %></strong><span>Saved items</span></a></div>
+
+  <div class="card" style="margin-bottom:16px"><ul class="list">
+    <li><a class="list-item" href="/saved"><span class="grow">Saved lodges</span><%- icon('chevron') %></a></li>
+    <li><a class="list-item" href="/saved?tab=items"><span class="grow">Saved items</span><%- icon('chevron') %></a></li>
+    <li><a class="list-item" href="/market/mine"><span class="grow">Your items for sale</span><%- icon('chevron') %></a></li>
+    <li><a class="list-item" href="<%= isLister ? '/lister' : '/account/become-lister' %>"><span class="grow"><strong><%= isLister ? 'Your lister dashboard' : 'List your lodges' %></strong><br><span class="muted small"><%= isLister ? 'Stats, lodges and verification' : 'Free for agents and landlords' %></span></span><%- icon('chevron') %></a></li>
+    <li><a class="list-item" href="/account/notifications"><span class="grow">Notifications</span><%- icon('chevron') %></a></li>
+    <% if (user.isAdmin) { %><li><a class="list-item" href="/admin"><span class="grow">Admin</span><%- icon('chevron') %></a></li><% } %>
+    <li><a class="list-item" href="/help"><span class="grow">Help and safety tips</span><%- icon('chevron') %></a></li>
+  </ul></div>
+
+  <details class="card" style="margin-bottom:12px" open>
+    <summary>Edit profile</summary>
+    <form class="inner" method="post" action="/account/profile">
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+      <div class="field"><label class="label" for="name">Name</label><input id="name" name="name" type="text" value="<%= user.name %>" required maxlength="60" autocomplete="name"></div>
+      <div class="field"><label class="label" for="phone">Phone (optional)</label><input id="phone" name="phone" type="tel" inputmode="tel" value="<%= user.phone || '' %>" autocomplete="tel" placeholder="0801 234 5678"></div>
+      <label class="check" style="margin-bottom:16px"><input type="checkbox" name="emailNotifications" <%= !user.notificationPrefs || user.notificationPrefs.email !== false ? 'checked' : '' %>><span>Email me about my lodges and account</span></label>
+      <button class="btn btn-primary" type="submit">Save changes</button>
+    </form>
+  </details>
+
+  <details class="card" style="margin-bottom:12px">
+    <summary>Change password</summary>
+    <form class="inner" method="post" action="/account/password">
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+      <div class="field"><label class="label" for="current">Current password</label><input id="current" name="current" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label class="label" for="np">New password</label><input id="np" name="password" type="password" autocomplete="new-password" minlength="8" required></div>
+      <button class="btn btn-primary" type="submit">Change password</button>
+    </form>
+  </details>
+
+  <form method="post" action="/logout" style="margin:16px 0"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-block" type="submit">Log out</button></form>
+
+  <details class="card">
+    <summary style="color:var(--danger)">Delete my account</summary>
+    <form class="inner" method="post" action="/account/delete" data-confirm="Delete your account permanently? This cannot be undone.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+      <p class="muted small">This removes your saved lodges, notifications and lister profile, and takes your lodges offline.</p>
+      <div class="field"><label class="label" for="dp">Enter your password to confirm</label><input id="dp" name="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-danger" type="submit">Delete account</button>
+    </form>
+  </details>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,19 @@
+<%- include('../partials/top') %>
+<div class="container narrow" style="max-width:640px">
+  <a class="small" href="/lister/lodges">&larr; Your lodges</a>
+  <h1 style="margin-top:8px">Update availability</h1>
+  <p class="muted"><%= l.title %>. Changes show straight away, with no review needed. Saving also confirms the lodge is still available.</p>
+  <form method="post" action="/lister/lodges/<%= l._id %>/availability" class="card card-pad">
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <% l.units.forEach(function (u) { %>
+      <div class="field">
+        <label class="label" for="s<%= u._id %>"><%= u.label %> <span class="muted">(<%= labelOf(C.UNIT_KINDS, u.kind) %>)</span></label>
+        <select id="s<%= u._id %>" name="spaces_<%= u._id %>">
+          <% for (let i = 0; i <= u.spacesTotal; i++) { %><option value="<%= i %>" <%= i === u.spacesAvailable ? 'selected' : '' %>><%= i === 0 ? 'None free (taken)' : i + (u.spacesTotal > 1 ? ' of ' + u.spacesTotal + ' spaces free' : ' free') %></option><% } %>
+        </select>
+      </div>
+    <% }) %>
+    <button class="btn btn-primary btn-block" type="submit">Save availability</button>
+  </form>
+</div>
+<%- include('../partials/bottom') %>

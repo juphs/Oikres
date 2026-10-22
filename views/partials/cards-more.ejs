@@ -1,0 +1,2 @@
+<% (locals.mixed || listings.map(function (l) { return { card: l }; })).forEach(function (x) { %><% if (x.ad) { %><%- include('ad-card', { ad: x.ad }) %><% } else { %><%- include('card', { l: x.card, savedSet: savedSet }) %><% } %><% }) %>
+<% if (hasMore && nextUrl) { %><span hidden data-next="<%= nextUrl %>"></span><% } %>

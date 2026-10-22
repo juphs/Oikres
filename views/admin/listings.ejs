@@ -1,0 +1,21 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:1000px">
+  <h1>Listings</h1>
+  <form method="get" action="/admin/listings" class="row-between" style="margin-bottom:12px;justify-content:flex-start">
+    <select name="status" aria-label="Status" style="width:auto"><option value="all" <%= status === 'all' ? 'selected' : '' %>>All</option><% Object.keys(C.LISTING_STATUS_LABELS).forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= C.LISTING_STATUS_LABELS[s] %></option><% }) %></select>
+    <input type="search" name="q" value="<%= q %>" placeholder="Search title" aria-label="Search title" style="width:auto;flex:1;min-width:140px">
+    <button class="btn btn-primary btn-sm" type="submit">Filter</button>
+  </form>
+  <p class="muted small"><%= total %> listing<%= total === 1 ? '' : 's' %></p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Title</th><th>Lister</th><th>Area</th><th>From</th><th>Status</th><th>Updated</th></tr></thead>
+    <tbody>
+      <% listings.forEach(function (l) { %>
+        <tr><td class="wrap"><a href="/admin/listings/<%= l._id %>"><%= l.title %></a></td><td><%= l.listerProfile ? l.listerProfile.displayName : '' %></td><td><%= l.area ? l.area.name : '' %></td><td><%= l.priceFrom ? naira(l.priceFrom) : '' %></td><td><%= statusLabel(l.status) %></td><td><%= timeAgo(l.updatedAt) %></td></tr>
+      <% }) %>
+      <% if (!listings.length) { %><tr><td colspan="6" class="muted">Nothing here.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <% if (pages > 1) { %><nav class="pager"><% if (page > 1) { %><a class="btn btn-ghost btn-sm" href="?status=<%= status %>&q=<%= encodeURIComponent(q) %>&page=<%= page - 1 %>">Previous</a><% } %><% if (page < pages) { %><a class="btn btn-ghost btn-sm" href="?status=<%= status %>&q=<%= encodeURIComponent(q) %>&page=<%= page + 1 %>">Next</a><% } %></nav><% } %>
+</div>
+<%- include('../partials/bottom') %>

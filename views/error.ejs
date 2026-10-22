@@ -1,0 +1,8 @@
+<%- include('partials/top') %>
+<div class="container"><div class="empty">
+  <h1><%= status === 403 ? 'Please reload and try again' : status === 429 ? 'Slow down a little' : 'Something went wrong' %></h1>
+  <p class="muted"><%= message %></p>
+  <% if (errorRef) { %><p class="muted small">Reference: <strong><%= errorRef %></strong>. Quote it if you contact support.</p><% } %>
+  <a class="btn btn-primary" href="/">Back to <%= site.name %></a>
+</div></div>
+<%- include('partials/bottom') %>

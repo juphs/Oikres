@@ -1,0 +1,28 @@
+<%- include('../partials/top') %>
+<% const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; const act = '/admin/market/' + i._id + '/'; %>
+<div class="container" style="max-width:820px">
+  <a class="small" href="/admin/market">&larr; Market</a>
+  <h1 style="margin-top:8px"><%= i.title %></h1>
+  <p><span class="tag <%= i.status === 'live' ? 'tag-ok' : i.status === 'pending' ? 'tag-info' : i.status === 'hidden' ? 'tag-danger' : '' %>"><%= C.MARKET_STATUS_LABELS[i.status] %></span>
+    <% if (i.status === 'hidden') { %><span class="muted small">hidden because: <%= i.hiddenReason || 'unknown' %></span><% } %></p>
+  <section class="card card-pad" style="margin-bottom:16px">
+    <div class="gallery" data-gallery tabindex="0"><% i.media.forEach(function (m, n) { %><% if (m.type === 'video') { %><figure class="g-item"><video controls muted playsinline preload="metadata"><source src="<%= videoSrc(m) %>" type="video/mp4"></video></figure><% } else { %><figure class="g-item" data-kind="image" data-full="<%= mediaSrc(m, 'large') %>"><img src="<%= mediaSrc(m, 'large') %>" alt="Photo <%= n + 1 %>" loading="lazy"></figure><% } %><% }) %></div>
+    <p><strong><%= i.price ? naira(i.price) : 'Free' %></strong><%= i.negotiable ? ' (negotiable)' : '' %> &middot; <%= labelOf(C.MARKET_CATEGORIES, i.category) %> &middot; <%= labelOf(C.MARKET_CONDITIONS, i.condition) %></p>
+    <p class="small muted"><%= [i.pickup, i.campus && i.campus.name, i.state && i.state.name].filter(Boolean).join(', ') || 'No location' %> &middot; WhatsApp <%= i.whatsappNumber %></p>
+    <p style="white-space:pre-line"><%= i.description %></p>
+    <p class="small">Seller: <a href="/admin/users/<%= seller.uid %>"><%= seller.name %></a><%= i.seller.banned ? ' (banned)' : '' %> &middot; <a href="/u/<%= seller.uid %>">public profile</a> &middot; <a href="/market/<%= i.slug %>">public page</a></p>
+  </section>
+  <% if (reports.length) { %><section class="card card-pad" style="margin-bottom:16px"><h2>Open reports (<%= reports.length %>)</h2><ul style="padding-left:18px;margin:0"><% reports.forEach(function (r) { %><li><strong><%= labelOf(C.ITEM_REPORT_REASONS, r.reason) %></strong> <span class="muted small">&middot; <%= timeAgo(r.createdAt) %></span><%= r.note ? ': ' + r.note : '' %></li><% }) %></ul></section><% } %>
+  <section class="card card-pad">
+    <h2>Actions</h2>
+    <div class="actions" style="margin-top:0">
+      <% if (i.status === 'pending') { %><form method="post" action="<%= act %>approve"><%- csrf %><button class="btn btn-primary btn-sm" type="submit"><%- icon('check') %>Approve</button></form><% } %>
+      <% if (['live', 'pending'].indexOf(i.status) > -1) { %><form method="post" action="<%= act %>hide" data-confirm="Hide this item from the market?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Hide</button></form><% } %>
+      <% if (i.status === 'hidden') { %><form method="post" action="<%= act %>restore"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Restore</button></form><% } %>
+      <% if (i.status === 'live') { %><form method="post" action="<%= act %><%= i.featured ? 'unfeature' : 'feature' %>"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('star') %><%= i.featured ? 'Remove featured' : 'Feature (show first)' %></button></form><% } %>
+      <form method="post" action="<%= act %>delete" data-confirm="Delete this item for good?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete</button></form>
+    </div>
+    <% if (!i.seller.banned && !seller.isAdmin) { %><div style="margin-top:12px"><%- include('../partials/ban-form', { uid: seller.uid, next: '/admin/market/' + i._id, label: 'Ban seller' }) %></div><% } %>
+  </section>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,21 @@
+<%- include('partials/top') %>
+<div class="container narrow" style="max-width:720px">
+  <h1>Privacy policy</h1>
+  <p class="muted">Last updated October 2026. Draft: have it reviewed by a Nigerian lawyer before launch.</p>
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Account details:</strong> your name, email, and a hashed password. Optional phone number.</li>
+    <li><strong>Lister details:</strong> display name, WhatsApp number, and the lodges you submit (photos, videos, prices, descriptions).</li>
+    <li><strong>Identity documents:</strong> only if you choose to upload one to earn the ID checked badge. Only <%= site.name %> admins can see it. We delete it 30 days after we decide.</li>
+    <li><strong>Usage events:</strong> lodge views, WhatsApp button clicks, saves and reports, linked to a random anonymous ID in a cookie, not to your name. We keep raw events for 12 months.</li>
+  </ul>
+  <h2>Cookies</h2>
+  <p>We use a sign-in cookie, a security cookie that protects forms, and an anonymous visitor ID cookie. We do not use advertising cookies. Saved lodges for signed-out visitors stay in your phone's own storage.</p>
+  <h2>Who handles data for us</h2>
+  <p>Cloudinary (photo, video and ID storage), our hosting and database providers, and our email provider. We do not sell personal data.</p>
+  <h2>WhatsApp numbers</h2>
+  <p>A lister's number is used only to open a WhatsApp chat when a visitor taps the contact button.</p>
+  <h2>Your rights</h2>
+  <p>You can view and edit your details in your account, delete your account at any time, or write to <a href="mailto:<%= cfg.supportEmail %>"><%= cfg.supportEmail %></a> to ask about, correct or remove your data, in line with the Nigeria Data Protection Act 2023.</p>
+</div>
+<%- include('partials/bottom') %>

@@ -1,0 +1,25 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:1000px">
+  <h1>Listers</h1>
+  <form method="get" action="/admin/listers" class="row-between" style="margin-bottom:12px;justify-content:flex-start">
+    <select name="filter" aria-label="Filter" style="width:auto"><option value="waiting" <%= waiting ? 'selected' : '' %>>Needs verification</option><option value="all" <%= !waiting ? 'selected' : '' %>>All listers</option></select>
+    <input type="search" name="q" value="<%= q %>" placeholder="Name or number" aria-label="Search" style="width:auto;flex:1;min-width:140px">
+    <button class="btn btn-primary btn-sm" type="submit">Filter</button>
+  </form>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Type</th><th>WhatsApp</th><th>Phone</th><th>ID</th><th>Account</th></tr></thead>
+    <tbody>
+      <% listers.forEach(function (p) { %>
+        <tr>
+          <td class="wrap"><a href="/admin/listers/<%= p._id %>"><%= p.displayName %></a><br><span class="muted small"><%= p.user ? p.user.email : '' %></span></td>
+          <td><%= p.type %></td><td><%= p.whatsappNumber %></td>
+          <td><span class="tag <%= p.verification.phoneVerified ? 'tag-ok' : 'tag-warn' %>"><%= p.verification.phoneVerified ? 'Verified' : 'Pending' %></span></td>
+          <td><span class="tag <%= p.verification.idChecked ? 'tag-ok' : p.verification.idStatus === 'submitted' ? 'tag-info' : '' %>"><%= p.verification.idChecked ? 'Checked' : p.verification.idStatus === 'submitted' ? 'To check' : p.verification.idStatus === 'rejected' ? 'Rejected' : 'None' %></span></td>
+          <td><%= p.user ? p.user.status : '' %></td>
+        </tr>
+      <% }) %>
+      <% if (!listers.length) { %><tr><td colspan="6" class="muted">Nobody here.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,75 @@
+<%- include('../partials/top') %>
+<% const extra = (f.min ? 1 : 0) + (f.max ? 1 : 0) + (f.condition ? 1 : 0); %>
+<noscript><style>.filters{position:static!important;transform:none!important;visibility:visible!important;width:auto!important;margin-top:12px;border-radius:var(--r)!important}.filters-btn,.sheet-backdrop{display:none!important}</style></noscript>
+<div class="container">
+  <div class="intro row-between">
+    <div><p class="greet">Student market</p><h1>Buy and sell near campus</h1></div>
+    <a class="btn btn-primary" href="/market/sell"><%- icon('plus') %>Sell an item</a>
+  </div>
+  <form id="browse" class="browse" method="get" action="/market" role="search">
+    <div class="browse-top">
+      <div class="searchbar">
+        <%- icon('search') %>
+        <input type="search" name="q" value="<%= q %>" placeholder="Search books, phones, fridges..." aria-label="Search the market" enterkeyhint="search" autocomplete="off" maxlength="60">
+        <button class="btn btn-primary btn-sm" type="submit">Search</button>
+      </div>
+      <div class="quick">
+        <select name="state" data-autosubmit aria-label="State">
+          <option value="">Any state</option>
+          <% states.forEach(function (s) { %><option value="<%= s.slug %>" <%= f.state === s.slug ? 'selected' : '' %>><%= s.name %></option><% }) %>
+        </select>
+        <select name="campus" data-autosubmit aria-label="Campus">
+          <option value="">Any campus</option>
+          <% campuses.forEach(function (c) { %><option value="<%= c.slug %>" <%= f.campus === c.slug ? 'selected' : '' %>><%= c.name %></option><% }) %>
+        </select>
+        <select name="category" data-autosubmit aria-label="Category">
+          <option value="">All categories</option>
+          <% C.MARKET_CATEGORIES.forEach(function (c) { %><option value="<%= c.value %>" <%= f.category === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %>
+        </select>
+        <button type="button" class="btn btn-ghost filters-btn" data-open="filters" aria-controls="filters"><%- icon('sliders') %>Filters<% if (extra) { %><span class="count-badge"><%= extra %></span><% } %></button>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" data-close="filters"></div>
+    <aside class="filters" id="filters" aria-label="More filters">
+      <div class="sheet-head"><h2>Filters</h2><button type="button" class="icon-btn" data-close="filters" aria-label="Close filters"><%- icon('x') %></button></div>
+      <div class="field">
+        <span class="label" id="price-label">Price (&#8358;)</span>
+        <div class="grid-2" role="group" aria-labelledby="price-label">
+          <input type="number" inputmode="numeric" name="min" min="0" step="500" placeholder="Min" value="<%= f.min %>" aria-label="Minimum price">
+          <input type="number" inputmode="numeric" name="max" min="0" step="500" placeholder="Max" value="<%= f.max %>" aria-label="Maximum price">
+        </div>
+      </div>
+      <fieldset class="field"><legend class="label">Condition</legend>
+        <div class="chips">
+          <% C.MARKET_CONDITIONS.forEach(function (c) { %><label class="chip-toggle"><input type="radio" name="condition" value="<%= c.value %>" <%= f.condition === c.value ? 'checked' : '' %>><span><%= c.label %></span></label><% }) %>
+        </div>
+      </fieldset>
+      <div class="sheet-foot"><a class="btn btn-ghost" href="/market">Clear all</a><button class="btn btn-primary" type="submit">Show results</button></div>
+    </aside>
+
+    <section class="results" aria-live="polite">
+      <div class="results-head">
+        <p class="muted small count"><%= total %> item<%= total === 1 ? '' : 's' %><%= activeFilters ? ' match your search' : ' for sale' %><% if (activeFilters) { %> &middot; <a href="/market">Clear filters</a><% } %></p>
+        <select name="sort" data-autosubmit data-ui="compact" aria-label="Sort by">
+          <option value="new" <%= sort === 'new' ? 'selected' : '' %>>Sort: Newest</option>
+          <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Sort: Price, low to high</option>
+          <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>Sort: Price, high to low</option>
+        </select>
+      </div>
+      <% if (items.length) { %>
+        <div class="grid" id="grid"><%- include('../partials/item-cards-more') %></div>
+        <% if (hasMore || prevUrl) { %>
+          <nav class="pager" id="pager" aria-label="More items">
+            <% if (prevUrl) { %><a class="btn btn-ghost" href="<%= prevUrl %>" data-prev rel="prev">Previous</a><% } %>
+            <% if (hasMore) { %><a class="btn btn-ghost" href="<%= nextUrl %>" rel="next" data-load-more>Show more items</a><% } %>
+          </nav>
+        <% } %>
+      <% } else { %>
+        <div class="empty"><%- icon('bag') %><h2>Nothing here yet</h2><p class="muted">Try another category or campus, or be the first to sell something.</p><a class="btn btn-primary" href="/market/sell">Sell an item</a></div>
+        <% if (locals.mixed) { %><div class="grid" style="margin-top:16px"><%- include('../partials/item-cards-more') %></div><% } %>
+      <% } %>
+    </section>
+  </form>
+</div>
+<%- include('../partials/bottom') %>

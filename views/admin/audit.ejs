@@ -1,0 +1,10 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:1000px">
+  <h1>Audit log</h1>
+  <div class="table-wrap"><table>
+    <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+    <tbody><% rows.forEach(function (r) { %><tr><td><%= formatDate(r.at) %> <%= new Date(r.at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }) %></td><td><%= r.actorLabel %></td><td><%= r.action %></td><td><%= r.targetType %></td><td class="wrap"><%= r.detail %></td></tr><% }) %></tbody>
+  </table></div>
+  <% if (pages > 1) { %><nav class="pager"><% if (page > 1) { %><a class="btn btn-ghost btn-sm" href="?page=<%= page - 1 %>">Newer</a><% } %><% if (page < pages) { %><a class="btn btn-ghost btn-sm" href="?page=<%= page + 1 %>">Older</a><% } %></nav><% } %>
+</div>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,57 @@
+<%- include('../partials/top') %>
+<% const v = p.verification; const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; %>
+<div class="container" style="max-width:760px">
+  <a class="small" href="/admin/listers">&larr; All listers</a>
+  <h1 style="margin-top:8px"><%= p.displayName %></h1>
+  <p class="muted"><%= p.type === 'landlord' ? 'Landlord' : 'Agent' %><%= p.businessName ? ' \u00B7 ' + p.businessName : '' %> &middot; <%= p.user.email %> &middot; account <%= p.user.status %><%= p.user.emailVerifiedAt ? '' : ' (email not verified)' %></p>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Phone verification</h2>
+    <p>WhatsApp number: <strong><%= p.whatsappNumber %></strong> <a href="https://wa.me/<%= p.whatsappNumber.replace(/\D/g, '') %>" target="_blank" rel="noopener">open chat</a></p>
+    <p class="muted small">Call or message the number and confirm the person controls it before marking it verified.</p>
+    <% if (v.phoneVerified) { %><p><span class="tag tag-ok">Verified <%= formatDate(v.phoneVerifiedAt) %></span></p>
+      <form method="post" action="/admin/listers/<%= p._id %>/phone_unverify"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Remove verification</button></form>
+    <% } else { %><form method="post" action="/admin/listers/<%= p._id %>/phone_verify"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Mark phone verified</button></form><% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Identity document</h2>
+    <% if (idUrl) { %>
+      <p class="small muted">Type: <%= labelOf(C.ID_TYPES, v.idType) || 'unknown' %>. This link expires in 10 minutes. Do not share or download the document.</p>
+      <a href="<%= idUrl %>" target="_blank" rel="noopener noreferrer"><img src="<%= idUrl %>" alt="Identity document" style="max-width:100%;border-radius:10px;border:1px solid var(--border)"></a>
+      <% if (v.idChecked) { %><p><span class="tag tag-ok">ID checked <%= formatDate(v.idCheckedAt) %></span></p><% } %>
+      <% if (v.idDocument && v.idDocument.purgeAfter) { %><p class="muted small">Deleted automatically after <%= formatDate(v.idDocument.purgeAfter) %>.</p><% } %>
+      <div class="actions">
+        <form method="post" action="/admin/listers/<%= p._id %>/id_approve"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Approve ID</button></form>
+      </div>
+      <form method="post" action="/admin/listers/<%= p._id %>/id_reject" style="margin-top:12px"><%- csrf %>
+        <div class="field"><label class="label" for="idn">Reject with a note</label><input id="idn" name="note" type="text" maxlength="300" placeholder="e.g. Photo is blurry"></div>
+        <button class="btn btn-danger btn-sm" type="submit">Reject ID</button>
+      </form>
+    <% } else { %><p class="muted">No ID document on file.<%= v.idChecked ? ' Previously checked ' + formatDate(v.idCheckedAt) + '.' : '' %></p><% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Lodges</h2>
+    <% if (!listings.length) { %><p class="muted">None yet.</p><% } else { %><ul style="padding-left:18px;margin:0"><% listings.forEach(function (l) { %><li><a href="/admin/listings/<%= l._id %>"><%= l.title %></a> <span class="muted small">(<%= statusLabel(l.status) %>)</span></li><% }) %></ul><% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Admin notes</h2>
+    <form method="post" action="/admin/listers/<%= p._id %>/notes"><%- csrf %>
+      <div class="field"><textarea name="notes" maxlength="1000" aria-label="Admin notes" placeholder="Private notes, never shown to the lister"><%= p.adminNotes || '' %></textarea></div>
+      <button class="btn btn-ghost btn-sm" type="submit">Save notes</button>
+    </form>
+  </section>
+
+  <section class="card card-pad">
+    <h2>Account</h2>
+    <% if (p.user.status === 'active') { %>
+      <form method="post" action="/admin/listers/<%= p._id %>/suspend_user" data-confirm="Suspend this lister and hide their lodges?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit">Suspend account</button></form>
+    <% } else { %>
+      <form method="post" action="/admin/listers/<%= p._id %>/unsuspend_user"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Reactivate account</button></form>
+      <p class="muted small">Their lodges stay suspended until you restore each one.</p>
+    <% } %>
+  </section>
+</div>
+<%- include('../partials/bottom') %>

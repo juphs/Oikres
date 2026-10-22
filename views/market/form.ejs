@@ -1,0 +1,56 @@
+<%- include('../partials/top') %>
+<%
+  const e = errors || {};
+  const bad = function (k) { return e[k] ? 'invalid' : ''; };
+  const live = item && ['live', 'pending'].indexOf(state.status) > -1;
+%>
+<div class="container" style="max-width:780px">
+  <a class="small" href="/market/mine">&larr; Your items</a>
+  <h1 style="margin-top:8px"><%= item ? 'Edit item' : 'Sell an item' %></h1>
+  <% if (!item) { %><p class="muted">Add clear photos and an honest description. Buyers will message you on WhatsApp. Do not list anything illegal, stolen, fake or unsafe. Such items are removed and the account can be banned.</p><% } %>
+  <% if (item && site.marketReviewRequired && live) { %><div class="alert alert-warn">Saving changes sends this item for a quick re-check before it shows again.</div><% } %>
+  <% if (Object.keys(e).length) { %><div class="alert alert-error" role="alert"><strong>Please fix these:</strong><ul style="margin:6px 0 0;padding-left:18px"><% Object.keys(e).forEach(function (k) { %><li><%= e[k] %></li><% }) %></ul></div><% } %>
+
+  <form id="item-form" method="post" action="<%= item ? '/market/' + item.slug + '/edit' : '/market/sell' %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <input type="hidden" name="mediaJson" id="mediaJson">
+
+    <section class="card form-card">
+      <h2>The item</h2>
+      <div class="field"><label class="label" for="title">Title</label><input id="title" name="title" type="text" maxlength="80" value="<%= state.title %>" placeholder="e.g. Tecno Spark 10, 128GB" class="<%= bad('title') %>" required></div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="category">Category</label>
+          <select id="category" name="category" class="<%= bad('category') %>"><option value="">Choose</option><% C.MARKET_CATEGORIES.forEach(function (c) { %><option value="<%= c.value %>" <%= state.category === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %></select></div>
+        <div class="field"><label class="label" for="condition">Condition</label>
+          <select id="condition" name="condition" class="<%= bad('condition') %>"><option value="">Choose</option><% C.MARKET_CONDITIONS.forEach(function (c) { %><option value="<%= c.value %>" <%= state.condition === c.value ? 'selected' : '' %>><%= c.label %></option><% }) %></select></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="price">Price (&#8358;, 0 if free)</label><input id="price" name="price" type="text" inputmode="numeric" value="<%= state.price %>" placeholder="e.g. 45000" class="<%= bad('price') %>"></div>
+        <div class="field"><label class="label">&nbsp;</label><label class="check"><input type="checkbox" name="negotiable" value="on" <%= state.negotiable ? 'checked' : '' %>> Price can be negotiated</label></div>
+      </div>
+      <div class="field"><label class="label" for="description">Description</label><textarea id="description" name="description" rows="5" maxlength="1000" placeholder="Age, what is included, any faults, why you are selling." class="<%= bad('description') %>"><%= state.description %></textarea></div>
+    </section>
+
+    <section class="card form-card" data-places>
+      <h2>Where is it?</h2>
+      <%- include('../partials/places-fields', { values: { state: state.state, campus: state.campus }, errors: e, campusLabel: 'Campus', campusNone: 'Off campus' }) %>
+      <div class="field"><label class="label" for="pickup">Meet-up spot <span class="muted">(optional)</span></label><input id="pickup" name="pickup" type="text" maxlength="80" value="<%= state.pickup %>" placeholder="e.g. Faculty of Engineering gate"></div>
+      <div class="field"><label class="label" for="whatsapp">Your WhatsApp number</label><input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" value="<%= state.whatsapp %>" placeholder="0801 234 5678" class="<%= bad('whatsapp') %>"><div class="hint">Buyers reach you here. It is never shown on the page, only used to open the chat.</div></div>
+    </section>
+
+    <section class="card form-card">
+      <h2>Photos</h2>
+      <p class="hint" style="margin-top:-6px">Add at least <%= C.RULES.marketMinPhotos %> clear photo, up to <%= C.RULES.marketMaxPhotos %>. The first photo is the cover.</p>
+      <div id="uploads" class="uploads" aria-live="polite"></div>
+      <p class="small muted" id="photo-count"></p>
+      <label class="dropzone"><input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple><%- icon('upload') %><strong>Add photos</strong></label>
+      <% if (e.media) { %><div class="error-text"><%= e.media %></div><% } %>
+      <label class="dropzone" style="margin-top:12px"><input type="file" id="video-input" accept="video/mp4,video/quicktime"><%- icon('upload') %><strong>Add a video (optional)</strong><span class="hint">MP4 or MOV, up to <%= C.RULES.maxVideoMb %> MB. It plays first on your item page, so buyers see the item working.</span></label>
+      <p class="small muted" id="video-note"></p>
+    </section>
+
+    <div class="form-actions"><button class="btn btn-primary" type="submit" id="save-item"><%= item ? 'Save changes' : 'Post item' %></button></div>
+  </form>
+</div>
+<script type="application/json" id="form-data"><%- JSON.stringify({ media: state.media, limits: { minPhotos: C.RULES.marketMinPhotos, maxPhotos: C.RULES.marketMaxPhotos, maxVideoMb: C.RULES.maxVideoMb } }).replace(/</g, '\\u003c') %></script>
+<%- include('../partials/bottom', { scripts: ['places.js', 'uploader.js', 'market-form.js'] }) %>

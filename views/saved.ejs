@@ -1,0 +1,29 @@
+<%- include('partials/top') %>
+<div class="container">
+  <h1>Saved</h1>
+  <% if (user) { %>
+    <div class="tabs" role="tablist" aria-label="What you saved">
+      <a href="/saved" <%- tab === 'lodges' ? 'aria-current="page"' : '' %>>Lodges <span class="muted">(<%= listings.length %>)</span></a>
+      <a href="/saved?tab=items" <%- tab === 'items' ? 'aria-current="page"' : '' %>>Items <span class="muted">(<%= items.length %>)</span></a>
+    </div>
+  <% } %>
+  <% if (user && tab === 'items') { %>
+    <% if (items.length) { %>
+      <div class="grid"><% items.forEach(function (i) { %><%- include('partials/item-card', { i: i, savedItems: savedItems }) %><% }) %></div>
+    <% } else { %>
+      <div class="empty"><%- icon('heart') %><h2>No saved items yet</h2><p class="muted">Tap the heart on an item in the market to keep it here.</p><a class="btn btn-primary" href="/market">Open the market</a></div>
+    <% } %>
+  <% } else if (user) { %>
+    <% if (listings.length) { %>
+      <div class="grid"><% listings.forEach(function (l) { %><%- include('partials/card', { l: l, savedSet: savedSet }) %><% }) %></div>
+    <% } else { %>
+      <div class="empty"><%- icon('heart') %><h2>Nothing saved yet</h2><p class="muted">Tap the heart on a lodge to keep it here.</p><a class="btn btn-primary" href="/">Browse lodges</a></div>
+    <% } %>
+  <% } else { %>
+    <div class="alert alert-info">Saved lodges are kept on this phone. <a href="/login?returnTo=%2Fsaved">Sign in</a> to keep them on every device.</div>
+    <div class="grid" id="saved-guest"></div>
+    <div class="empty" id="saved-empty" hidden><%- icon('heart') %><h2>Nothing saved yet</h2><p class="muted">Tap the heart on a lodge to keep it here.</p><a class="btn btn-primary" href="/">Browse lodges</a></div>
+    <noscript><p class="muted">Turn on JavaScript to see lodges saved on this device.</p></noscript>
+  <% } %>
+</div>
+<%- include('partials/bottom') %>

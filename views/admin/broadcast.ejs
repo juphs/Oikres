@@ -1,0 +1,15 @@
+<%- include('../partials/top') %>
+<div class="container narrow" style="max-width:640px">
+  <h1>Broadcast</h1>
+  <p class="muted">Send a message to everyone's notification bell. Use it for news, rule changes or reminders.</p>
+  <form class="card card-pad" method="post" action="/admin/broadcast" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <div class="field"><label class="label" for="aud">Send to</label>
+      <select id="aud" name="audience"><option value="all" <%= form.audience === 'all' || !form.audience ? 'selected' : '' %>>Everyone (<%= counts.active || 0 %>)</option><option value="listers" <%= form.audience === 'listers' ? 'selected' : '' %>>Listers only (<%= counts.listers || 0 %>)</option><option value="admins" <%= form.audience === 'admins' ? 'selected' : '' %>>Administrators only (<%= counts.admins || 0 %>)</option></select></div>
+    <div class="field"><label class="label" for="t">Title</label><input id="t" name="title" type="text" maxlength="80" value="<%= form.title || '' %>" required></div>
+    <div class="field"><label class="label" for="b">Message</label><textarea id="b" name="body" maxlength="300"><%= form.body || '' %></textarea></div>
+    <div class="field"><label class="label" for="l">Link (optional)</label><input id="l" name="link" type="text" maxlength="120" value="<%= form.link || '' %>" placeholder="/help"><div class="hint">A page on this site, starting with /</div></div>
+    <button class="btn btn-primary btn-block" type="submit"><%- icon('megaphone') %>Send message</button>
+  </form>
+</div>
+<%- include('../partials/bottom') %>

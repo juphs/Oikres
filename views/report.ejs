@@ -1,0 +1,19 @@
+<%- include('partials/top') %>
+<div class="container narrow">
+  <a class="small" href="/lodges/<%= l.slug %>">&larr; Back to the lodge</a>
+  <h1 style="margin-top:12px">Report this lodge</h1>
+  <p class="muted"><%= l.title %></p>
+  <form method="post" action="/lodges/<%= l.slug %>/report" class="card card-pad">
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <fieldset class="field">
+      <legend class="label">What is wrong?</legend>
+      <% C.REPORT_REASONS.forEach(function (r, i) { %>
+        <label class="check" style="margin-bottom:10px"><input type="radio" name="reason" value="<%= r.value %>" <%= i === 0 ? 'required' : '' %>><span><%= r.label %></span></label>
+      <% }) %>
+    </fieldset>
+    <div class="field"><label class="label" for="note">More detail (optional)</label><textarea id="note" name="note" maxlength="500" placeholder="For example: the agent asked for a higher price than listed."></textarea></div>
+    <button class="btn btn-primary btn-block" type="submit">Send report</button>
+    <p class="hint">Reports are reviewed by the <%= site.name %> team. We never share who reported.</p>
+  </form>
+</div>
+<%- include('partials/bottom') %>

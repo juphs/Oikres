@@ -1,0 +1,99 @@
+<%- include('../partials/top') %>
+<%
+  const images = (l.media || []).filter(function (m) { return m.type === 'image'; });
+  const video = (l.media || []).find(function (m) { return m.type === 'video'; });
+  const ver = (l.listerProfile && l.listerProfile.verification) || {};
+  const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">';
+%>
+<div class="container" style="max-width:900px">
+  <a class="small" href="/admin/listings">&larr; All listings</a>
+  <div class="row-between" style="margin-top:8px"><h1 style="margin:0"><%= l.title %></h1><span><% if (l.isFeatured) { %><span class="tag tag-warn"><%- icon('star') %>Featured</span> <% } %><span class="tag tag-info"><%= statusLabel(l.status) %></span></span></div>
+  <p class="muted"><%= labelOf(C.PROPERTY_TYPES, l.propertyType) %> &middot; <%= [l.junction, l.area && l.area.name].filter(Boolean).join(', ') %> &middot; <a href="/lodges/<%= l.slug %>">Open public page</a></p>
+  <% if (l.rejectionReason) { %><div class="alert alert-error">Last rejection: <%= l.rejectionReason %></div><% } %>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Review actions</h2>
+    <div class="actions" style="margin-top:0;margin-bottom:10px">
+      <a class="btn btn-ghost btn-sm" href="/admin/listings/<%= l._id %>/edit"><%- icon('edit') %>Edit lodge</a>
+      <form method="post" action="/admin/listings/<%= l._id %>/<%= l.isFeatured ? 'unfeature' : 'feature' %>"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('star') %><%= l.isFeatured ? 'Remove featured' : 'Feature (show first)' %></button></form>
+      <% if (['live', 'needs_reconfirm', 'hidden'].indexOf(l.status) > -1) { %><form method="post" action="/admin/listings/<%= l._id %>/confirm"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Mark confirmed today</button></form><% } %>
+      <% if (['live', 'needs_reconfirm', 'hidden'].indexOf(l.status) > -1) { %><form method="post" action="/admin/listings/<%= l._id %>/rented" data-confirm="Mark this lodge as rented?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Mark rented</button></form><% } %>
+      <form method="post" action="/admin/listings/<%= l._id %>/delete" data-confirm="Delete this lodge and its photos for good? This cannot be undone."><%- csrf %><button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete for good</button></form>
+    </div>
+    <div class="actions" style="margin-top:0">
+      <% if (l.status === 'pending') { %><form method="post" action="/admin/listings/<%= l._id %>/approve"><%- csrf %><button class="btn btn-primary btn-sm" type="submit"><%- icon('check') %>Approve and publish</button></form><% } %>
+      <% if (['live', 'needs_reconfirm', 'pending'].indexOf(l.status) > -1) { %>
+        <form method="post" action="/admin/listings/<%= l._id %>/hide"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Hide</button></form>
+        <form method="post" action="/admin/listings/<%= l._id %>/suspend" data-confirm="Suspend this lodge?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit">Suspend</button></form>
+      <% } %>
+      <% if (['hidden', 'suspended'].indexOf(l.status) > -1) { %><form method="post" action="/admin/listings/<%= l._id %>/restore"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Restore</button></form><% } %>
+    </div>
+    <% if (l.status === 'pending') { %>
+      <form method="post" action="/admin/listings/<%= l._id %>/reject" style="margin-top:16px"><%- csrf %>
+        <div class="grid-2">
+          <div class="field"><label class="label" for="reason">Reject with reason</label><select id="reason" name="reason"><% C.REJECTION_REASONS.forEach(function (r) { %><option value="<%= r.value %>"><%= r.label %></option><% }) %></select></div>
+          <div class="field"><label class="label" for="note">Note to the lister</label><input id="note" name="note" type="text" maxlength="300" placeholder="What should they fix?"></div>
+        </div>
+        <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+      </form>
+    <% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Checklist</h2>
+    <ul class="muted small" style="margin:0;padding-left:18px">
+      <li>Photos are real and show this property (<%= images.length %> photo<%= images.length === 1 ? '' : 's' %><%= video ? ' and a video' : '' %>)</li>
+      <li>Rent and every charge look right<% if (comp && comp.count) { %>. Average yearly rent for similar live lodges here: <strong><%= naira(Math.round(comp.avg)) %></strong> (<%= comp.count %> compared). This one: <strong><%= naira(l.priceYearly) %></strong><% } else { %>. No similar live lodges to compare yet<% } %></li>
+      <li>Charges disclosed by lister: <strong><%= l.chargesDisclosed ? 'Yes' : 'No' %></strong></li>
+      <li>Not a duplicate of another listing, and the contact number works</li>
+    </ul>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Media</h2>
+    <div class="uploads" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">
+      <% images.forEach(function (m) { %><a class="thumb" href="<%= m.url %>" target="_blank" rel="noopener" aria-label="Open this photo in a new tab"><img src="<%= mediaSrc(m, 'thumb') %>" alt="" loading="lazy"></a><% }) %>
+    </div>
+    <% if (video) { %><video controls preload="none" poster="<%= posterSrc(video, images[0]) %>" style="width:100%;max-width:420px;border-radius:10px"><source src="<%= videoSrc(video) %>" type="video/mp4"></video><% } %>
+  </section>
+
+  <section style="margin-bottom:16px">
+    <% l.units.forEach(function (u) { %>
+      <article class="card unit"><div class="unit-head"><div><h3><%= u.label %></h3><div class="unit-facts"><span class="tag tag-info"><%= labelOf(C.UNIT_KINDS, u.kind) %></span><span class="tag"><%= u.spacesAvailable %> of <%= u.spacesTotal %> free</span><span class="tag"><%= labelOf(C.GENDERS, u.genderPreference) %></span></div></div><div class="unit-price"><%= naira(u.rent) %> <span><%= periodLabel(u.period) %></span></div></div>
+        <%- include('../partials/cost', { unit: u, fees: l.fees }) %></article>
+    <% }) %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Description</h2>
+    <p style="white-space:pre-line"><%= l.description || 'None' %></p>
+    <p class="muted small">Amenities: <%= (l.amenities || []).map(function (a) { return labelOf(C.AMENITIES, a); }).join(', ') || 'None' %></p>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Lister</h2>
+    <% if (l.listerProfile) { %>
+      <p><a href="/admin/listers/<%= l.listerProfile._id %>"><strong><%= l.listerProfile.displayName %></strong></a> (<%= l.listerProfile.type %>) &middot; <%= l.listerProfile.whatsappNumber %> &middot; <%= l.lister ? l.lister.email : '' %></p>
+      <div class="chips-row"><span class="tag <%= ver.phoneVerified ? 'tag-ok' : '' %>">Phone <%= ver.phoneVerified ? 'verified' : 'not verified' %></span><span class="tag <%= ver.idChecked ? 'tag-ok' : '' %>">ID <%= ver.idChecked ? 'checked' : 'not checked' %></span></div>
+    <% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Property visit</h2>
+    <% if (l.visited && l.visited.done) { %>
+      <p>Visited on <%= formatDate(l.visited.at) %>.<%= l.visited.note ? ' Note: ' + l.visited.note : '' %></p>
+      <form method="post" action="/admin/listings/<%= l._id %>/unvisited" data-confirm="Remove the Visited badge?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Remove badge</button></form>
+    <% } else { %>
+      <p class="muted small">Only mark this after an <%= site.name %> representative has physically visited the property.</p>
+      <form method="post" action="/admin/listings/<%= l._id %>/visited"><%- csrf %>
+        <div class="field"><label class="label" for="vnote">Inspection note</label><input id="vnote" name="note" type="text" maxlength="300" placeholder="What was checked?"></div>
+        <button class="btn btn-primary btn-sm" type="submit">Mark as visited</button>
+      </form>
+    <% } %>
+  </section>
+
+  <% if (reports.length) { %>
+    <section class="card card-pad"><h2>Reports</h2><ul class="muted small" style="padding-left:18px;margin:0"><% reports.forEach(function (r) { %><li><%= labelOf(C.REPORT_REASONS, r.reason) %> (<%= r.status %>), <%= timeAgo(r.createdAt) %><%= r.note ? ': ' + r.note : '' %></li><% }) %></ul></section>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

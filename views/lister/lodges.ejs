@@ -1,0 +1,46 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:860px">
+  <div class="row-between" style="margin-bottom:12px"><h1 style="margin:0">Your lodges</h1><a class="btn btn-primary btn-sm" href="/lister/lodges/new"><%- icon('plus') %>Add lodge</a></div>
+  <% if (!listings.length) { %>
+    <div class="empty"><%- icon('building') %><h2>No lodges listed yet</h2><p class="muted">Add your first lodge. Listing is free, and tenants contact you on WhatsApp.</p><a class="btn btn-primary" href="/lister/lodges/new">Add your first lodge</a></div>
+  <% } else { %>
+    <div class="stack">
+    <% listings.forEach(function (l) {
+      const cover = (l.media || []).find(function (m) { return m.type === 'image'; });
+      const tone = { live: 'tag-ok', pending: 'tag-info', needs_reconfirm: 'tag-warn', hidden: 'tag-warn', rejected: 'tag-danger', rented: '', draft: '', suspended: 'tag-danger' }[l.status] || '';
+    %>
+      <article class="card lodge-row">
+        <% if (cover) { %><img src="<%= mediaSrc(cover, 'thumb') %>" width="84" height="64" alt="" loading="lazy"><% } else { %><div class="thumb-ph"></div><% } %>
+        <div class="grow">
+          <h3><%= l.title %></h3>
+          <p class="muted small" style="margin:0 0 6px"><span class="tag <%= tone %>"><%= statusLabel(l.status) %></span> <% if (l.priceFrom) { %> &middot; <%= naira(l.priceFrom) %> <%= periodLabel(l.periodFrom) %><% } %> &middot; <%= l.counters.views %> views &middot; <%= l.counters.contactClicks %> WhatsApp clicks</p>
+          <% if (l.status === 'rejected' && l.rejectionReason) { %><p class="small" style="color:var(--danger);margin:0 0 6px"><%= l.rejectionReason %></p><% } %>
+          <% if (l.status === 'needs_reconfirm') { %><p class="small" style="color:var(--warn);margin:0 0 6px">Confirm it is still available or it will be hidden from search.</p><% } %>
+          <% if (l.status === 'hidden') { %><p class="small" style="color:var(--warn);margin:0 0 6px"><%= l.hiddenReason === 'stale' ? 'Hidden because it was not confirmed in time.' : l.hiddenReason === 'reports' ? 'Hidden while our team checks a report.' : 'Hidden by the Oikres team. Contact support.' %></p><% } %>
+          <% if (l.status === 'suspended') { %><p class="small" style="color:var(--danger);margin:0 0 6px">Suspended by the <%= site.name %> team. Contact support.</p><% } %>
+          <% if (l.status === 'live' && l.reconfirmDueAt) { %><p class="small muted" style="margin:0 0 6px">Next confirmation due <%= formatDate(l.reconfirmDueAt) %></p><% } %>
+          <div class="actions">
+            <% if (l.status === 'needs_reconfirm' || (l.status === 'hidden' && l.hiddenReason === 'stale')) { %>
+              <form method="post" action="/lister/lodges/<%= l._id %>/reconfirm"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-primary btn-sm" type="submit"><%- icon('check') %>Still available</button></form>
+            <% } %>
+            <% if (['live', 'needs_reconfirm'].indexOf(l.status) > -1) { %>
+              <a class="btn btn-ghost btn-sm" href="/lodges/<%= l.slug %>">View</a>
+              <a class="btn btn-ghost btn-sm" href="/lister/lodges/<%= l._id %>/availability">Update spaces</a>
+            <% } %>
+            <% if (['draft', 'rejected', 'pending', 'live', 'needs_reconfirm', 'hidden', 'rented'].indexOf(l.status) > -1) { %><a class="btn btn-ghost btn-sm" href="/lister/lodges/<%= l._id %>/edit"><%- icon('edit') %>Edit</a><% } %>
+            <% if (['live', 'needs_reconfirm', 'hidden'].indexOf(l.status) > -1) { %>
+              <form method="post" action="/lister/lodges/<%= l._id %>/rented" data-confirm="Mark this lodge as rented? It will stop showing in search."><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Mark rented</button></form>
+            <% } %>
+            <% if (l.status === 'rented') { %>
+              <form method="post" action="/lister/lodges/<%= l._id %>/relist"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">Available again</button></form>
+            <% } %>
+            <% if (l.status === 'pending' || l.status === 'draft' || l.status === 'rejected') { %><a class="btn btn-ghost btn-sm" href="/lodges/<%= l.slug %>">Preview</a><% } %>
+            <form method="post" action="/lister/lodges/<%= l._id %>/delete" data-confirm="Delete this lodge? This cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete</button></form>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

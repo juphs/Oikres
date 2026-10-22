@@ -1,0 +1,59 @@
+<%- include('partials/top') %>
+<div class="container narrow" style="max-width:720px">
+  <h1>Help and safety</h1>
+  <% if (tour) { %>
+  <section class="section" id="tour">
+    <h2><%= tour.title %></h2>
+    <% if (tour.intro) { %><p class="muted"><%= tour.intro %></p><% } %>
+    <ul class="welcome-list" style="margin-top:12px"><% tour.items.forEach(function (it) { %><li><span class="welcome-ico" aria-hidden="true"><%- icon(it.icon) %></span><div><strong><%= it.title %></strong><% if (it.text) { %><p><%= it.text %></p><% } %></div></li><% }) %></ul>
+  </section>
+  <% } %>
+  <section class="section" id="safety">
+    <h2>Before you pay for any lodge</h2>
+    <ul>
+      <li>Inspect the place in person, or send someone you trust. Never pay for a place you have not seen.</li>
+      <li>Check the full cost on the lodge page: rent plus every fee. Ask the lister to confirm each amount and who receives it.</li>
+      <li>Ask for the tenancy or agreement in writing and keep every receipt.</li>
+      <li>Be careful with anyone who rushes you, asks for money to "hold" a room, or will not let you visit.</li>
+      <li>Pay the landlord or agent directly. <%= site.name %> does not take payments for rent.</li>
+      <li>Something looks wrong? Use Report on the lodge page.</li>
+    </ul>
+  </section>
+  <section class="section">
+    <h2>What the checks mean</h2>
+    <ul>
+      <li><strong>Phone number verified:</strong> an <%= site.name %> team member confirmed the lister controls the WhatsApp number.</li>
+      <li><strong>ID checked:</strong> an <%= site.name %> team member looked at the lister's identity document.</li>
+      <li><strong>Property visited:</strong> an <%= site.name %> representative visited the property.</li>
+    </ul>
+    <p class="muted">Badges are added by people, one at a time. They never appear automatically. A badge is not a guarantee, so still inspect before you pay.</p>
+  </section>
+  <section class="section">
+    <h2>For agents and landlords</h2>
+    <ul>
+      <li>Listing is free. Add every charge a tenant must pay, including who is paid and what is refundable.</li>
+      <li>Confirm availability when we ask. Lodges not confirmed within 30 days are hidden until you confirm.</li>
+      <li>You can list several rooms or bed spaces in one property.</li>
+    </ul>
+  </section>
+  <section class="section" id="market-safety">
+    <h2>Buying and selling in the market</h2>
+    <ul>
+      <li>Meet in a busy place on campus, in daylight, and check the item before you pay.</li>
+      <li>Never pay ahead for delivery or to &ldquo;hold&rdquo; an item, and never share your card or bank PIN or an OTP.</li>
+      <li>Look at the seller's profile first. Ratings and reviews come from other signed-in people. A seller with no reviews is not a bad sign, but treat very cheap prices with care.</li>
+      <li>After you deal with someone, leave an honest review on their profile. It helps the next person.</li>
+      <li>Items stay in the market for 60 days. If you are selling, renew it from <strong>Your items</strong> while it is still for sale, and mark it sold when it is gone.</li>
+      <li>See a scam, a fake lodge or a person being abusive? Use <strong>Report</strong> on the item or profile. Confirmed fraudsters are banned.</li>
+    </ul>
+  </section>
+  <section class="section" id="contact">
+    <h2>Chat with the admin</h2>
+    <% if (supportLink()) { %>
+      <p>Need help with a lodge, a listing or your account? Message us on WhatsApp.</p>
+      <p><a class="btn btn-wa" href="<%= supportLink() %>" target="_blank" rel="noopener"><%- icon('whatsapp') %>Chat on WhatsApp</a></p>
+    <% } else { %><p class="muted">WhatsApp chat is not set up yet.</p><% } %>
+    <p class="muted">Prefer email? <a href="mailto:<%= site.supportEmail %>"><%= site.supportEmail %></a></p>
+  </section>
+</div>
+<%- include('partials/bottom') %>

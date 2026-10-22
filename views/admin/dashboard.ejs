@@ -1,0 +1,52 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:1180px">
+  <div class="row-between" style="margin-bottom:12px"><h1 style="margin:0">Admin</h1><a class="btn btn-ghost btn-sm" href="/admin/settings"><%- icon('palette') %>Site settings</a></div>
+  <div class="tiles">
+    <a class="card tile" href="/admin/listings?status=pending"><strong><%= pending %></strong><span>Listings to review</span></a>
+    <a class="card tile" href="/admin/listers"><strong><%= listersWaiting %></strong><span>Listers to verify</span></a>
+    <a class="card tile" href="/admin/reports"><strong><%= openReports %></strong><span>Open reports</span></a>
+    <a class="card tile" href="/admin/listings?status=live"><strong><%= live %></strong><span>Lodges live</span></a>
+  </div>
+  <div class="tiles">
+    <a class="card tile" href="/admin/users"><strong><%= uc.total || 0 %></strong><span>People</span></a>
+    <a class="card tile" href="/admin/users"><strong><%= uc.week || 0 %></strong><span>New this week</span></a>
+    <a class="card tile" href="/admin/users?filter=listers"><strong><%= uc.listers || 0 %></strong><span>Listers</span></a>
+    <a class="card tile" href="/admin/users?filter=suspended"><strong><%= uc.suspended || 0 %></strong><span>Suspended</span></a>
+  </div>
+  <div class="tiles">
+    <a class="card tile" href="/admin/market?status=live"><strong><%= itemsLive %></strong><span>Market items live</span></a>
+    <a class="card tile" href="/admin/market?status=pending"><strong><%= itemsPending %></strong><span>Items to review</span></a>
+    <a class="card tile" href="/admin/users?filter=banned"><strong><%= uc.banned || 0 %></strong><span>Banned</span></a>
+    <a class="card tile" href="/admin/ads"><strong><%= adsActive %></strong><span>Ads running</span></a>
+  </div>
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Views in the last 7 days</h2>
+    <div class="bars" role="img" aria-label="Daily views">
+      <% days.forEach(function (d) { %><div class="bar" title="<%= d.views %> views, <%= d.clicks %> WhatsApp clicks"><i style="height:<%= Math.round(d.views / maxDay * 80) %>%"></i><span><%= d.label %></span></div><% }) %>
+    </div>
+  </section>
+  <div class="form-cols" style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start">
+    <section class="card">
+      <div class="card-pad" style="padding-bottom:0"><h2>Waiting for review</h2></div>
+      <% if (!recent.length) { %><p class="card-pad muted">Nothing is waiting.</p><% } else { %>
+        <ul class="list"><% recent.forEach(function (l) { %><li><a class="list-item" href="/admin/listings/<%= l._id %>"><span class="grow"><%= l.title %><br><span class="muted small">Submitted <%= timeAgo(l.submittedAt) %></span></span><%- icon('chevron') %></a></li><% }) %></ul>
+      <% } %>
+    </section>
+    <section class="card">
+      <div class="card-pad" style="padding-bottom:0"><h2>Newest people</h2></div>
+      <ul class="list"><% recentUsers.forEach(function (u) { %><li><a class="list-item" href="/admin/users/<%= u.uid %>"><span class="grow"><%= u.name %><br><span class="muted small"><%= u.email %> &middot; <%= timeAgo(u.createdAt) %></span></span><%- icon('chevron') %></a></li><% }) %></ul>
+    </section>
+    <section class="card">
+      <div class="card-pad" style="padding-bottom:0"><h2>Lodges by status</h2></div>
+      <ul class="list"><% Object.keys(C.LISTING_STATUS_LABELS).forEach(function (s) { if (!statusCounts[s]) return; %><li><a class="list-item" href="/admin/listings?status=<%= s %>"><span class="grow"><%= statusLabel(s) %></span><strong><%= statusCounts[s] %></strong></a></li><% }) %>
+        <% if (!Object.keys(statusCounts).length) { %><li class="list-item muted">No lodges yet.</li><% } %></ul>
+    </section>
+    <section class="card">
+      <div class="card-pad" style="padding-bottom:0"><h2>Most viewed lodges</h2></div>
+      <% if (!top.length) { %><p class="card-pad muted">No views yet.</p><% } else { %>
+        <ul class="list"><% top.forEach(function (l) { %><li><a class="list-item" href="/admin/listings/<%= l._id %>"><span class="grow"><%= l.title %><br><span class="muted small"><%= l.views %> views &middot; <%= l.clicks %> WhatsApp clicks &middot; <%= l.saves %> saved</span></span><%- icon('chevron') %></a></li><% }) %></ul>
+      <% } %>
+    </section>
+  </div>
+</div>
+<%- include('../partials/bottom') %>

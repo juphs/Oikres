@@ -1,0 +1,37 @@
+<%- include('../partials/top') %>
+<div class="container" style="max-width:780px">
+  <div class="page-head"><h1>Your items</h1><a class="btn btn-primary" href="/market/sell"><%- icon('plus') %>Sell an item</a></div>
+  <% if (!items.length) { %>
+    <div class="empty"><%- icon('bag') %><h2>You are not selling anything yet</h2><p class="muted">Post something you no longer need and reach students near you.</p><a class="btn btn-primary" href="/market/sell">Sell an item</a></div>
+  <% } else { %>
+    <div class="stack">
+      <% items.forEach(function (i) {
+        const cover = i.media.find(function (m) { return m.type !== 'video'; });
+        const expiredNow = i.status === 'live' && i.expired;
+        const soon = i.status === 'live' && !i.expired && i.daysLeft !== null && i.daysLeft <= C.RULES.marketExpireWarnDays;
+        const tone = expiredNow ? 'tag-warn' : { live: 'tag-ok', pending: 'tag-info', hidden: 'tag-danger', sold: '' }[i.status] || '';
+      %>
+        <article class="card lodge-row">
+          <% if (cover) { %><img src="<%= mediaSrc(cover, 'thumb') %>" width="84" height="64" alt="" loading="lazy"><% } else { %><div class="thumb-ph"></div><% } %>
+          <div class="grow">
+            <h3><%= i.title %></h3>
+            <p class="muted small" style="margin:0 0 6px"><span class="tag <%= tone %>"><%= expiredNow ? 'Expired' : C.MARKET_STATUS_LABELS[i.status] %></span> &middot; <%= i.price ? naira(i.price) : 'Free' %> &middot; <%= labelOf(C.MARKET_CATEGORIES, i.category) %></p>
+            <% if (i.status === 'live') { %><p class="small muted" style="margin:0 0 6px"><%- icon('eye') %> <%= i.views %> view<%= i.views === 1 ? '' : 's' %> &middot; <%= i.contacts %> chat<%= i.contacts === 1 ? '' : 's' %> &middot; <%= i.saves %> save<%= i.saves === 1 ? '' : 's' %><% if (!expiredNow && i.daysLeft !== null) { %> &middot; <%= i.daysLeft %> day<%= i.daysLeft === 1 ? '' : 's' %> left<% } %></p><% } %>
+            <% if (expiredNow) { %><p class="small" style="color:var(--danger);margin:0 0 6px">This item expired and is no longer shown in the market. Renew it to show it again.</p><% } %>
+            <% if (i.status === 'pending') { %><p class="small muted" style="margin:0 0 6px">Waiting for the team to approve it.</p><% } %>
+            <% if (i.status === 'hidden') { %><p class="small" style="color:var(--danger);margin:0 0 6px"><%= i.hiddenReason === 'reports' ? 'Hidden while our team checks a report.' : 'Hidden by the ' + site.name + ' team. Contact support if you think this is a mistake.' %></p><% } %>
+            <div class="actions">
+              <% if (i.status === 'live' || i.status === 'sold') { %><a class="btn btn-ghost btn-sm" href="/market/<%= i.slug %>">View</a><% } %>
+              <a class="btn btn-ghost btn-sm" href="/market/<%= i.slug %>/edit"><%- icon('edit') %>Edit</a>
+              <% if (expiredNow || soon) { %><form method="post" action="/market/<%= i.slug %>/renew"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-primary btn-sm" type="submit"><%- icon('refresh') %>Renew</button></form><% } %>
+              <% if (i.status === 'live') { %><form method="post" action="/market/<%= i.slug %>/sold" data-confirm="Mark this item as sold? It will stop showing in the market."><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit"><%- icon('check') %>Mark sold</button></form><% } %>
+              <% if (i.status === 'sold') { %><form method="post" action="/market/<%= i.slug %>/relist"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-ghost btn-sm" type="submit">For sale again</button></form><% } %>
+              <form method="post" action="/market/<%= i.slug %>/delete" data-confirm="Delete this item? This cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken() %>"><button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete</button></form>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

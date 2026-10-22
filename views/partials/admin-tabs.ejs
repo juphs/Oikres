@@ -1,0 +1,6 @@
+<nav class="admin-tabs" aria-label="Admin">
+  <% [['dashboard','/admin','Dashboard'],['listings','/admin/listings','Lodges'],['market','/admin/market','Market'],['ads','/admin/ads','Ads'],['popup','/admin/popup','Popup'],['users','/admin/users','Users'],['listers','/admin/listers','Listers'],['reports','/admin/reports','Reports'],['reference','/admin/reference','Places'],['broadcast','/admin/broadcast','Broadcast'],['settings','/admin/settings','Settings'],['audit','/admin/audit','Audit']].forEach(function (t) { %>
+    <a href="<%= t[1] %>" <%- nav === t[0] ? 'aria-current="page"' : '' %>><%= t[2] %></a>
+  <% }) %>
+  <a href="/">View site</a>
+</nav>

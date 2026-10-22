@@ -1,0 +1,104 @@
+<%- include('../partials/top') %>
+<% const csrf = '<input type="hidden" name="_csrf" value="' + csrfToken() + '">'; const act = '/admin/users/' + u.uid + '/'; %>
+<div class="container" style="max-width:820px">
+  <a class="small" href="/admin/users">&larr; All users</a>
+  <div class="row-between" style="margin-top:8px">
+    <div style="display:flex;gap:12px;align-items:center"><div class="avatar" aria-hidden="true"><%= u.name.charAt(0).toUpperCase() %></div><div><h1 style="margin:0"><%= u.name %></h1><span class="muted"><%= u.email %><%= u.phone ? ' \u00B7 ' + u.phone : '' %></span></div></div>
+    <span><% if (u.isAdmin) { %><span class="tag tag-warn">Admin</span> <% } %><% if (u.roles.indexOf('lister') > -1) { %><span class="tag tag-info">Lister</span> <% } %><span class="tag <%= u.status === 'active' ? 'tag-ok' : 'tag-danger' %>"><%= u.status %></span> <span class="tag <%= u.emailVerifiedAt ? 'tag-ok' : 'tag-warn' %>"><%= u.emailVerifiedAt ? 'Email verified' : 'Email not verified' %></span></span>
+  </div>
+  <% if (u.bannedAt) { %><div class="alert alert-error" role="alert"><strong>Banned <%= formatDate(u.bannedAt) %>.</strong> Reason: <%= u.banReason || 'not recorded' %>. This person cannot sign in, and their lodges, items and reviews they wrote are hidden.
+    <form method="post" action="<%= act %>unban" data-confirm="Lift the ban? They can sign in again. Their lodges and items stay hidden until you restore them." style="margin-top:8px"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Lift ban</button></form></div><% } %>
+  <% if (openReports) { %><div class="alert alert-warn"><%= openReports %> open report<%= openReports === 1 ? '' : 's' %> against this account. <a href="/admin/reports?type=user">Review reports</a></div><% } %>
+  <p class="muted small">Joined <%= formatDate(u.createdAt) %> &middot; <%= saved %> saved lodge<%= saved === 1 ? '' : 's' %><% if (profile) { %> &middot; <a href="/admin/listers/<%= profile._id %>">Lister profile</a><% } %></p>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Quick actions</h2>
+    <div class="actions" style="margin-top:0">
+      <% if (u.emailVerifiedAt) { %><form method="post" action="<%= act %>unverify_email"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Mark email unverified</button></form>
+      <% } else { %><form method="post" action="<%= act %>verify_email"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Verify email now</button></form><% } %>
+      <form method="post" action="<%= act %>send_reset"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Send password reset email</button></form>
+      <% if (u.status === 'active' && !u.isAdmin) { %><form method="post" action="<%= act %>impersonate" data-confirm="View the site as <%= u.name %>? You can return to admin at any time. This is recorded in the audit log."><%- csrf %><button class="btn btn-ghost btn-sm" type="submit"><%- icon('eye') %>View site as this user</button></form><% } %>
+      <% if (!isSelf) { %>
+        <% if (u.status === 'suspended' && u.bannedAt) { %><% } else if (u.status === 'suspended') { %><form method="post" action="<%= act %>unsuspend"><%- csrf %><button class="btn btn-primary btn-sm" type="submit">Reactivate account</button></form>
+        <% } else if (u.status === 'active') { %><form method="post" action="<%= act %>suspend" data-confirm="Suspend this account and hide its lodges?"><%- csrf %><button class="btn btn-danger btn-sm" type="submit">Suspend</button></form><% } %>
+        <% if (u.status === 'active' && !u.isAdmin) { %><form method="post" action="<%= act %>make_admin" data-confirm="Make <%= u.name %> an administrator? They will be able to do everything you can."><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Make administrator</button></form><% } %>
+        <% if (u.isAdmin) { %><form method="post" action="<%= act %>remove_admin" data-confirm="Remove administrator access?"><%- csrf %><button class="btn btn-ghost btn-sm" type="submit">Remove administrator access</button></form><% } %>
+      <% } %>
+    </div>
+  </section>
+
+  <details class="card" style="margin-bottom:12px" open>
+    <summary>Edit details</summary>
+    <form class="inner" method="post" action="<%= act %>edit"><%- csrf %>
+      <div class="field"><label class="label" for="n">Name</label><input id="n" name="name" type="text" value="<%= u.name %>" maxlength="60" required></div>
+      <div class="field"><label class="label" for="e">Email</label><input id="e" name="email" type="email" value="<%= u.email %>" required></div>
+      <div class="field"><label class="label" for="p">Phone</label><input id="p" name="phone" type="tel" value="<%= u.phone || '' %>" placeholder="0801 234 5678"></div>
+      <button class="btn btn-primary btn-sm" type="submit">Save details</button>
+    </form>
+  </details>
+  <details class="card" style="margin-bottom:12px">
+    <summary>Set a new password</summary>
+    <form class="inner" method="post" action="<%= act %>set_password"><%- csrf %>
+      <p class="muted small">This signs the person out everywhere. Tell them the new password privately and ask them to change it. <%= u.isAdmin ? 'Administrator passwords need 12 or more characters.' : 'Use 8 or more characters.' %></p>
+      <div class="field"><label class="label" for="pw">New password</label><input id="pw" name="password" type="password" autocomplete="new-password" required></div>
+      <button class="btn btn-primary btn-sm" type="submit">Set password</button>
+    </form>
+  </details>
+  <details class="card" style="margin-bottom:12px">
+    <summary>Private notes (only administrators see these)</summary>
+    <form class="inner" method="post" action="<%= act %>notes"><%- csrf %>
+      <div class="field"><textarea name="notes" maxlength="1000" aria-label="Notes"><%= u.adminNotes || '' %></textarea></div>
+      <button class="btn btn-ghost btn-sm" type="submit">Save notes</button>
+    </form>
+  </details>
+
+  <% if (!isSelf && !u.isAdmin && !u.bannedAt && u.status !== 'deleted') { %>
+  <section class="card card-pad" style="margin-bottom:16px" id="ban">
+    <h2>Ban for fraud or abuse</h2>
+    <p class="muted small">Use this for confirmed scammers. It is stronger than a suspension: the account stays on record so the email cannot be used to sign up again, and the public profile shows a "banned" notice.</p>
+    <%- include('../partials/ban-form', { uid: u.uid, next: '/admin/users/' + u.uid, label: 'Ban this account' }) %>
+  </section>
+  <% } %>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Public profile and reviews</h2>
+    <p class="small"><a href="/u/<%= u.uid %>">View public profile</a> &middot; <%= reviewSummary.count ? reviewSummary.average.toFixed(1) + ' stars from ' + reviewSummary.count + ' rating' + (reviewSummary.count === 1 ? '' : 's') : 'No ratings yet' %></p>
+    <h3>About this person</h3>
+    <% if (!reviewsAbout.length) { %><p class="muted small">None.</p><% } %>
+    <ul class="reviews"><% reviewsAbout.forEach(function (r) { %><li style="margin-bottom:8px"><%- include('../partials/stars', { value: r.rating }) %> <strong><%= r.author.name %></strong><%= r.author.banned ? ' (banned, not counted)' : '' %> <span class="muted small">&middot; <%= formatDate(r.createdAt) %><%= r.status === 'removed' ? ' &middot; removed' : '' %></span>
+      <% if (r.body) { %><div class="small" style="white-space:pre-line"><%= r.body %></div><% } %>
+      <form method="post" action="/admin/reviews/<%= r.uid %>/<%= r.status === 'removed' ? 'restore' : 'remove' %>" style="display:inline"><%- csrf %><input type="hidden" name="next" value="/admin/users/<%= u.uid %>"><button class="btn btn-ghost btn-sm" type="submit"><%= r.status === 'removed' ? 'Restore' : 'Remove' %></button></form></li><% }) %></ul>
+    <h3>Written by this person</h3>
+    <% if (!reviewsBy.length) { %><p class="muted small">None.</p><% } %>
+    <ul class="reviews"><% reviewsBy.forEach(function (r) { %><li style="margin-bottom:8px"><%- include('../partials/stars', { value: r.rating }) %> about <a href="/admin/users/<%= r.subject.uid %>"><%= r.subject.name %></a> <span class="muted small">&middot; <%= formatDate(r.createdAt) %><%= r.status === 'removed' ? ' &middot; removed' : '' %></span>
+      <% if (r.body) { %><div class="small" style="white-space:pre-line"><%= r.body %></div><% } %>
+      <form method="post" action="/admin/reviews/<%= r.uid %>/<%= r.status === 'removed' ? 'restore' : 'remove' %>" style="display:inline"><%- csrf %><input type="hidden" name="next" value="/admin/users/<%= u.uid %>"><button class="btn btn-ghost btn-sm" type="submit"><%= r.status === 'removed' ? 'Restore' : 'Remove' %></button></form></li><% }) %></ul>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Market items</h2>
+    <% if (!items.length) { %><p class="muted">None.</p><% } else { %><ul style="padding-left:18px;margin:0"><% items.forEach(function (i) { %><li><a href="/admin/market/<%= i._id %>"><%= i.title %></a> <span class="muted small">(<%= C.MARKET_STATUS_LABELS[i.status] %>)</span></li><% }) %></ul><% } %>
+  </section>
+
+  <section class="card card-pad" style="margin-bottom:16px">
+    <h2>Lodges</h2>
+    <% if (!lodges.length) { %><p class="muted">None.</p><% } else { %><ul style="padding-left:18px;margin:0"><% lodges.forEach(function (l) { %><li><a href="/admin/listings/<%= l._id %>"><%= l.title %></a> <span class="muted small">(<%= statusLabel(l.status) %>)</span></li><% }) %></ul><% } %>
+  </section>
+
+  <% if (!isSelf) { %>
+  <section class="card card-pad danger-zone">
+    <h2 style="color:var(--danger)">Danger zone</h2>
+    <form method="post" action="<%= act %>delete" style="margin-bottom:16px"><%- csrf %>
+      <p><strong>Delete account.</strong> Removes personal details, saved lodges and ID documents, and takes their lodges offline. The record stays so reports and the audit log still make sense.<% if (u.bannedAt) { %> <strong>Do not delete a banned account:</strong> deleting frees its email address for sign-up again. Leave it banned.<% } %></p>
+      <div class="field"><label class="label" for="c1">Type DELETE to confirm</label><input id="c1" name="confirm" type="text" autocomplete="off" style="max-width:220px"></div>
+      <button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Delete account</button>
+    </form>
+    <form method="post" action="<%= act %>purge"><%- csrf %>
+      <p><strong>Erase everything.</strong> Permanently removes the account and every lodge, photo and record it owns. This cannot be undone.</p>
+      <div class="field"><label class="label" for="c2">Type DELETE to confirm</label><input id="c2" name="confirm" type="text" autocomplete="off" style="max-width:220px"></div>
+      <button class="btn btn-danger btn-sm" type="submit"><%- icon('trash') %>Erase for good</button>
+    </form>
+  </section>
+  <% } %>
+</div>
+<%- include('../partials/bottom') %>

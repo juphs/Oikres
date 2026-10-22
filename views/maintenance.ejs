@@ -1,0 +1,8 @@
+<%- include('partials/top') %>
+<div class="container"><div class="empty" style="max-width:520px;margin:40px auto">
+  <%- icon('settings') %>
+  <h1>Be right back</h1>
+  <p class="muted"><%= message %></p>
+  <% if (supportLink()) { %><a class="btn btn-wa" href="<%= supportLink() %>" target="_blank" rel="noopener"><%- icon('whatsapp') %>Chat with us</a><% } %>
+</div></div>
+<%- include('partials/bottom') %>

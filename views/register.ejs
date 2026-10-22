@@ -1,0 +1,18 @@
+<%- include('partials/top') %>
+<div class="container">
+  <div class="card auth">
+    <h1>Create your account</h1>
+    <p class="muted">Save lodges on every device, or list your own.</p>
+    <form method="post" action="/register" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+      <input type="hidden" name="returnTo" value="<%= returnTo %>">
+      <div class="field"><label class="label" for="name">Your name</label><input id="name" name="name" type="text" autocomplete="name" value="<%= form.name || '' %>" required maxlength="60" class="<%= errors.name ? 'invalid' : '' %>"><% if (errors.name) { %><div class="error-text"><%= errors.name %></div><% } %></div>
+      <div class="field"><label class="label" for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" inputmode="email" value="<%= form.email || '' %>" required class="<%= errors.email ? 'invalid' : '' %>"><% if (errors.email) { %><div class="error-text"><%= errors.email %></div><% } %></div>
+      <div class="field"><label class="label" for="password">Password</label><input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required class="<%= errors.password ? 'invalid' : '' %>"><div class="hint">At least 8 characters.</div><% if (errors.password) { %><div class="error-text"><%= errors.password %></div><% } %></div>
+      <div class="field"><label class="check"><input type="checkbox" name="terms" required><span>I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy policy</a>.</span></label><% if (errors.terms) { %><div class="error-text"><%= errors.terms %></div><% } %></div>
+      <button class="btn btn-primary btn-block" type="submit">Create account</button>
+    </form>
+    <p class="center muted" style="margin-top:16px">Already have an account? <a href="/login?returnTo=<%= encodeURIComponent(returnTo) %>">Sign in</a></p>
+  </div>
+</div>
+<%- include('partials/bottom') %>

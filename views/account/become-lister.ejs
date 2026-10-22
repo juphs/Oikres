@@ -1,0 +1,33 @@
+<%- include('../partials/top') %>
+<div class="container narrow" style="max-width:640px">
+  <h1>List your lodges on <%= site.name %></h1>
+  <p class="muted">Free to list. Tenants contact you on WhatsApp. Takes about two minutes.</p>
+  <% if (!user.emailVerifiedAt) { %><div class="alert alert-warn">Verify your email first. We sent a link to <%= user.email %>.</div><% } %>
+  <form class="card card-pad" method="post" action="/account/become-lister" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+    <div class="field"><label class="label" for="displayName">Name tenants will see</label><input id="displayName" name="displayName" type="text" value="<%= form.displayName || user.name %>" maxlength="60" required class="<%= errors.displayName ? 'invalid' : '' %>"><% if (errors.displayName) { %><div class="error-text"><%= errors.displayName %></div><% } %></div>
+    <div class="field"><label class="label" for="businessName">Business or agency name (optional)</label><input id="businessName" name="businessName" type="text" value="<%= form.businessName || '' %>" maxlength="60"></div>
+    <fieldset class="field"><legend class="label">I am a</legend>
+      <div class="chips">
+        <label class="chip-toggle"><input type="radio" name="type" value="agent" <%= form.type !== 'landlord' ? 'checked' : '' %>><span>Agent</span></label>
+        <label class="chip-toggle"><input type="radio" name="type" value="landlord" <%= form.type === 'landlord' ? 'checked' : '' %>><span>Landlord</span></label>
+      </div>
+    </fieldset>
+    <div class="field"><label class="label" for="whatsapp">WhatsApp number</label><input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" value="<%= form.whatsapp || '' %>" placeholder="0801 234 5678" required class="<%= errors.whatsapp ? 'invalid' : '' %>"><div class="hint">Tenants message this number. We will confirm it by call or WhatsApp to earn the Phone verified badge.</div><% if (errors.whatsapp) { %><div class="error-text"><%= errors.whatsapp %></div><% } %></div>
+
+    <div class="field">
+      <span class="label">ID document (optional)</span>
+      <p class="hint" style="margin-top:0">Upload a clear photo of your NIN slip, driver's licence, voter's card or passport to earn the ID checked badge. Only <%= site.name %> admins can see it, and it is deleted 30 days after we decide.</p>
+      <div class="js-id-upload">
+        <select name="idType" aria-label="ID type" style="margin-bottom:8px"><% C.ID_TYPES.forEach(function (t) { %><option value="<%= t.value %>"><%= t.label %></option><% }) %></select>
+        <label class="file-pick"><input type="file" accept="image/*" aria-label="Photo of your ID"><span class="pick-btn"><%- icon('upload') %>Choose photo</span><span class="pick-name">No file chosen</span></label>
+        <input type="hidden" name="idPublicId" value="">
+        <p class="hint js-status"></p>
+      </div>
+    </div>
+
+    <div class="field"><label class="check"><input type="checkbox" name="agree"><span>I will only list properties I am allowed to let, with accurate prices and every charge disclosed.</span></label><% if (errors.agree) { %><div class="error-text"><%= errors.agree %></div><% } %></div>
+    <button class="btn btn-primary btn-block" type="submit">Create lister account</button>
+  </form>
+</div>
+<%- include('../partials/bottom', { scripts: ['uploader.js'] }) %>
